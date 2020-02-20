@@ -82,7 +82,7 @@ class AdminController {
     }
 
     if (oldPassword && !(await admin.checkPassword(oldPassword))) {
-      return res.status(401).json({ error: 'Password does not match' });
+      return res.status(401).json({ error: 'Password does not match ' });
     }
 
     const { id, firstname, lastname } = await admin.update(body);
