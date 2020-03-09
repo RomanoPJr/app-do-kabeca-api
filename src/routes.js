@@ -14,5 +14,6 @@ routes.use(authMiddleware);
 
 routes.get('/admins', AdminController.index);
 routes.put('/admins', AdminController.update);
+routes.delete('/admins/:id', AdminController.delete);
 
 export default routes;

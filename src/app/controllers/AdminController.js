@@ -107,6 +107,17 @@ class AdminController {
     const { id, firstname, lastname } = await admin.update(body);
     return res.json({ id, firstname, lastname });
   }
+
+  async delete(req, res) {
+    const { id } = req.params;
+
+    const response = await Admin.destroy({
+      where: {
+        id,
+      },
+    });
+    return res.json(response);
+  }
 }
 
 export default new AdminController();
