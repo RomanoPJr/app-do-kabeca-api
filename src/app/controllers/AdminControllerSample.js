@@ -60,7 +60,7 @@ class AdminController {
   }
 
   async update(req, res) {
-    const { body } = req;
+    const { body, adminId } = req;
 
     const schema = Yup.object().shape({
       firstname: Yup.string(),
@@ -81,10 +81,12 @@ class AdminController {
       return res.status(400).json({ error: 'Validation Fails' });
     }
 
-    const { id, email, phone, oldPassword } = body;
+    const { email, oldPassword, phone } = body;
 
-    const admin = await Admin.findByPk(id);
+    const admin = await Admin.findByPk(adminId);
 
+    console.log(adminId);
+    console.log(admin.email, email);
     if (email && email !== admin.email) {
       const adminExists = await Admin.findOne({
         where: { email },
@@ -109,8 +111,8 @@ class AdminController {
       return res.status(401).json({ error: 'Password does not match ' });
     }
 
-    const { firstname, lastname } = await admin.update(body);
-    return res.json({ firstname, lastname });
+    const { id, firstname, lastname } = await admin.update(body);
+    return res.json({ id, firstname, lastname });
   }
 
   async delete(req, res) {
