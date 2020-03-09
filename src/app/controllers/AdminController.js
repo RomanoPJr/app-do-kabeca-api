@@ -115,7 +115,6 @@ class AdminController {
 
   async delete(req, res) {
     const { id } = req.params;
-    console.log(id, '<------------------');
     await Admin.destroy({
       where: {
         id,
