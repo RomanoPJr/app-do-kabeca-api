@@ -3,6 +3,25 @@ import Sequelize from 'sequelize';
 import Admin from '../models/Admin';
 
 class AdminController {
+  async index(req, res) {
+    const { pageNumber, pageSize, orderBy, orderDirection } = req.query;
+
+    const pageTotal = await Admin.count();
+    const admins = await Admin.findAll({
+      offset: (pageNumber - 1) * pageSize || 0,
+      limit: pageSize || 10,
+      attributes: ['id', 'firstname', 'lastname', 'email', 'phone'],
+      order: [[orderBy || 'id', orderDirection || 'asc']],
+    });
+
+    res.json({
+      pageSize,
+      pageNumber,
+      pageTotal: Math.ceil(pageTotal / pageSize),
+      data: admins,
+    });
+  }
+
   async store(req, res) {
     const { body } = req;
 

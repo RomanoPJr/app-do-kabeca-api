@@ -12,6 +12,7 @@ routes.post('/sessions', SessionController.store);
 
 routes.use(authMiddleware);
 
+routes.get('/admins', AdminController.index);
 routes.put('/admins', AdminController.update);
 
 export default routes;
