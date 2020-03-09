@@ -4,12 +4,17 @@ import Admin from '../models/Admin';
 
 class AdminController {
   async index(req, res) {
-    const { pageNumber, pageSize, orderBy, orderDirection } = req.query;
+    const {
+      pageNumber = 1,
+      pageSize = 10,
+      orderBy,
+      orderDirection,
+    } = req.query;
 
     const pageTotal = await Admin.count();
     const admins = await Admin.findAll({
-      offset: (pageNumber - 1) * pageSize || 0,
-      limit: pageSize || 10,
+      offset: (pageNumber - 1) * pageSize,
+      limit: pageSize,
       attributes: ['id', 'firstname', 'lastname', 'email', 'phone'],
       order: [[orderBy || 'id', orderDirection || 'asc']],
     });
@@ -110,13 +115,13 @@ class AdminController {
 
   async delete(req, res) {
     const { id } = req.params;
-
-    const response = await Admin.destroy({
+    console.log(id, '<------------------');
+    await Admin.destroy({
       where: {
         id,
       },
     });
-    return res.json(response);
+    return res.status(200).json({});
   }
 }
 
