@@ -11,11 +11,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      status: {
-        type: Sequelize.ENUM,
-        values: ['ACTIVE', 'INACTIVE'],
-        defaultValue: 'ACTIVE',
-      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

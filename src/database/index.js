@@ -1,8 +1,9 @@
 import Sequelize from 'sequelize';
 import databaseConfig from '../config/database';
 import Admin from '../app/models/Admin';
+import StatuteSuggestion from '../app/models/StatuteSuggestion';
 
-const models = [Admin];
+const models = [Admin, StatuteSuggestion];
 
 class Database {
   constructor() {
