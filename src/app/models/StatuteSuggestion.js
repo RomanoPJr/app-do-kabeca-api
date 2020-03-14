@@ -4,7 +4,7 @@ class StatuteSuggestion extends Model {
   static init(sequelize) {
     super.init(
       {
-        description: Sequelize.STRING,
+        description: Sequelize.TEXT,
       },
       {
         sequelize,
