@@ -1,9 +1,10 @@
 import { Router } from 'express';
 
-import AdminController from './app/controllers/AdminController';
-import StatuteSuggestionController from './app/controllers/StatuteSuggestionController';
-import SessionController from './app/controllers/SessionController';
 import authMiddleware from './app/middlewares/auth';
+import AdminController from './app/controllers/AdminController';
+import SessionController from './app/controllers/SessionController';
+import EventSuggestionController from './app/controllers/EventSuggestionController';
+import StatuteSuggestionController from './app/controllers/StatuteSuggestionController';
 
 const routes = new Router();
 
@@ -28,5 +29,10 @@ routes.get('/statute_suggestion', StatuteSuggestionController.index);
 routes.post('/statute_suggestion', StatuteSuggestionController.store);
 routes.put('/statute_suggestion', StatuteSuggestionController.update);
 routes.delete('/statute_suggestion/:id', StatuteSuggestionController.delete);
+
+routes.get('/event_suggestion', EventSuggestionController.index);
+routes.post('/event_suggestion', EventSuggestionController.store);
+routes.put('/event_suggestion', EventSuggestionController.update);
+routes.delete('/event_suggestion/:id', EventSuggestionController.delete);
 
 export default routes;
