@@ -17,6 +17,7 @@ class OrganizerController {
       limit: pageSize,
       attributes: ['id', 'name', 'email', 'phone'],
       order: [[orderBy || 'id', orderDirection || 'asc']],
+      where: { status: ['TESTER', 'ACTIVE'] },
     });
 
     res.json({
@@ -44,17 +45,19 @@ class OrganizerController {
     });
 
     if (validate.error) {
-      return res.status(400).json({ status: 'error', message: validate.error });
+      return res
+        .status(400)
+        .json({ status: 'error', message: `Erro: ${validate.error}` });
     }
 
     const organizerExists = await Organizer.findOne({
-      where: Sequelize.or({ phone: body.phone }),
+      where: { status: ['TESTER', 'ACTIVE'], phone: body.phone },
     });
 
     if (organizerExists) {
       return res.status(400).json({
         status: 'error',
-        message: 'Número de Telefone já foi cadastrado',
+        message: 'Erro: Número de Telefone já existe na base de dados',
       });
     }
 
@@ -70,9 +73,18 @@ class OrganizerController {
       name: Yup.string().required('Campo Nome é obrigatório'),
       phone: Yup.string().required('Campo Telefone é obrigatório'),
       email: Yup.string().email(),
-      password: Yup.string()
-        .required('Campo Senha é obrigatório')
-        .min(6),
+      password: Yup.string().when('oldPassword', (oldPassword, field) =>
+        oldPassword && oldPassword !== ''
+          ? field.required('Campo Senha é obrigatório').min(6)
+          : field
+      ),
+      confirmPassword: Yup.string().when('password', (password, field) =>
+        password && password !== ''
+          ? field
+              .required()
+              .oneOf([Yup.ref('password')], 'As senhas são conferem')
+          : field
+      ),
     });
 
     const validate = await schema.validate(body).catch(err => {
@@ -80,7 +92,9 @@ class OrganizerController {
     });
 
     if (validate.error) {
-      return res.status(400).json({ status: 'error', message: validate.error });
+      return res
+        .status(400)
+        .json({ status: 'error', message: `Erro: ${validate.error}` });
     }
 
     const { id, phone, oldPassword } = body;
@@ -95,19 +109,22 @@ class OrganizerController {
 
     if (phone && phone !== organizer.phone) {
       const organizerExists = await Organizer.findOne({
-        where: { phone },
+        where: { status: ['TESTER', 'ACTIVE'], phone },
       });
 
       if (organizerExists) {
         return res.status(400).json({
           status: 'error',
-          message: 'Número de Telefone já foi cadastrado',
+          message: 'Erro: Número de Telefone já existe na base de dados',
         });
       }
     }
 
     if (oldPassword && !(await organizer.checkPassword(oldPassword))) {
-      return res.status(401).json({ error: 'A Senha anterior não confere' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'Erro: A Senha anterior não confere',
+      });
     }
 
     await organizer.update(body);
@@ -116,10 +133,17 @@ class OrganizerController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await Organizer.destroy({
-      where: { id },
-    });
-    return res.status(200).json({ status: 'success' });
+
+    const organizer = await Organizer.findByPk(id);
+
+    if (!organizer) {
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'Organizador não encontrado' });
+    }
+
+    await organizer.update({ id, status: 'INACTIVE' });
+    return res.json({ status: 'success' });
   }
 }
 
