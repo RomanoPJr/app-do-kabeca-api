@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
+import Sequelize from 'sequelize';
 
+import Admin from '../models/Admin';
 import authConfig from '../../config/auth';
 
 export default async (req, res, next) => {
@@ -15,7 +17,16 @@ export default async (req, res, next) => {
   try {
     const decoded = await promisify(jwt.verify)(token, authConfig.secret);
 
-    req.adminId = decoded.id;
+    const adminExists = await Admin.findOne({
+      where: Sequelize.or({ id: decoded.id }),
+    });
+
+    if (!adminExists) {
+      return res
+        .status(400)
+        .json({ error: 'Somente admistradores podem executar essa ação' });
+    }
+
     return next();
   } catch (error) {
     return res.status(401).json({ error: 'Invalid token' });

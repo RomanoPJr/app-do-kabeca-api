@@ -7,11 +7,7 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true,
       },
-      firstname: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      lastname: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
@@ -29,7 +25,7 @@ module.exports = {
       status: {
         type: Sequelize.ENUM,
         values: ['ACTIVE', 'INACTIVE', 'TESTER'],
-        defaultValue: 'ACTIVE',
+        defaultValue: 'TESTER',
       },
       created_at: {
         type: Sequelize.DATE,

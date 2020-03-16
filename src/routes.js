@@ -3,6 +3,7 @@ import { Router } from 'express';
 import authMiddleware from './app/middlewares/auth';
 import AdminController from './app/controllers/AdminController';
 import SessionController from './app/controllers/SessionController';
+import OrganizerController from './app/controllers/OrganizerController';
 import EventSuggestionController from './app/controllers/EventSuggestionController';
 import StatuteSuggestionController from './app/controllers/StatuteSuggestionController';
 
@@ -34,5 +35,10 @@ routes.get('/event_suggestion', EventSuggestionController.index);
 routes.post('/event_suggestion', EventSuggestionController.store);
 routes.put('/event_suggestion', EventSuggestionController.update);
 routes.delete('/event_suggestion/:id', EventSuggestionController.delete);
+
+routes.get('/organizer', OrganizerController.index);
+routes.post('/organizer', OrganizerController.store);
+routes.put('/organizer', OrganizerController.update);
+routes.delete('/organizer/:id', OrganizerController.delete);
 
 export default routes;
