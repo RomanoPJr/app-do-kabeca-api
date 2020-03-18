@@ -15,9 +15,8 @@ class OrganizerController {
     const organizers = await Organizer.findAll({
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
-      attributes: ['id', 'name', 'email', 'phone'],
-      order: [[orderBy || 'id', orderDirection || 'asc']],
-      where: { status: ['TESTER', 'ACTIVE'] },
+      attributes: ['id', 'name', 'email', 'phone', 'status'],
+      order: [[orderBy || 'status', orderDirection || 'asc']],
     });
 
     res.json({

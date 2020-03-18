@@ -85,8 +85,6 @@ class AdminController {
 
     const admin = await Admin.findByPk(adminId);
 
-    console.log(adminId);
-    console.log(admin.email, email);
     if (email && email !== admin.email) {
       const adminExists = await Admin.findOne({
         where: { email },

@@ -23,6 +23,41 @@ class Organizer extends Model {
       }
     });
 
+    this.addHook('afterFind', async organizers => {
+      if (organizers.length) {
+        organizers.map(organizer => {
+          switch (organizer.status) {
+            case 'ACTIVE':
+              organizer.status = 'Ativo';
+              break;
+            case 'INACTIVE':
+              organizer.status = 'Inativo';
+              break;
+            case 'TESTER':
+              organizer.status = 'Tester';
+              break;
+            default:
+              break;
+          }
+          return null;
+        });
+      } else {
+        switch (organizers.status) {
+          case 'ACTIVE':
+            organizers.status = 'Ativo';
+            break;
+          case 'INACTIVE':
+            organizers.status = 'Inativo';
+            break;
+          case 'TESTER':
+            organizers.status = 'Tester';
+            break;
+          default:
+            break;
+        }
+      }
+    });
+
     return this;
   }
 
