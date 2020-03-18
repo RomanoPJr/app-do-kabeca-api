@@ -21,6 +21,19 @@ class Organizer extends Model {
       if (organizer.password) {
         organizer.password_hash = await bcrypt.hash(organizer.password, 8);
       }
+      switch (organizer.status) {
+        case 'Ativo':
+          organizer.status = 'ACTIVE';
+          break;
+        case 'Inativo':
+          organizer.status = 'INACTIVE';
+          break;
+        case 'Tester':
+          organizer.status = 'TESTER';
+          break;
+        default:
+          break;
+      }
     });
 
     this.addHook('afterFind', async organizers => {
