@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
-import Sequelize from 'sequelize';
 import Organizer from '../models/Organizer';
+import getStatusTranslate from '../../utils/status';
 
 class OrganizerController {
   async index(req, res) {
@@ -16,7 +16,14 @@ class OrganizerController {
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       attributes: ['id', 'name', 'email', 'phone', 'status'],
-      order: [[orderBy || 'status', orderDirection || 'asc']],
+      order: [
+        [orderBy || 'status', orderDirection || 'asc'],
+        [orderBy || 'name', orderDirection || 'asc'],
+      ],
+    });
+
+    organizers.map(organizer => {
+      organizer.status = getStatusTranslate(organizer.status);
     });
 
     res.json({
@@ -33,6 +40,7 @@ class OrganizerController {
     const schema = Yup.object().shape({
       name: Yup.string().required('Campo Nome é obrigatório'),
       phone: Yup.string().required('Campo Telefone é obrigatório'),
+      status: Yup.string().required('Campo Status é obrigatório'),
       email: Yup.string().email(),
       password: Yup.string()
         .required('Campo Senha é obrigatório')
@@ -60,6 +68,8 @@ class OrganizerController {
       });
     }
 
+    body.status = getStatusTranslate(body.status);
+
     await Organizer.create(body);
 
     return res.json({ status: 'success' });
@@ -71,6 +81,7 @@ class OrganizerController {
     const schema = Yup.object().shape({
       name: Yup.string().required('Campo Nome é obrigatório'),
       phone: Yup.string().required('Campo Telefone é obrigatório'),
+      status: Yup.string().required('Campo Status é obrigatório'),
       email: Yup.string().email(),
       password: Yup.string().when('oldPassword', (oldPassword, field) =>
         oldPassword && oldPassword !== ''
@@ -125,6 +136,8 @@ class OrganizerController {
         message: 'Erro: A Senha anterior não confere',
       });
     }
+
+    body.status = getStatusTranslate(body.status);
 
     await organizer.update(body);
     return res.json({ status: 'success' });
