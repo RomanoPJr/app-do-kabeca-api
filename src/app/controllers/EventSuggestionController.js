@@ -38,6 +38,17 @@ class EventSuggestionController {
       return res.status(400).json({ error: 'Validation Fails' });
     }
 
+    const EventSuggestionExists = await EventSuggestion.findOne({
+      where: { description: body.description },
+    });
+
+    if (EventSuggestionExists) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Erro: Já existe um evento com este nome',
+      });
+    }
+
     const createResponse = await EventSuggestion.create(body);
     return res.json(createResponse);
   }
