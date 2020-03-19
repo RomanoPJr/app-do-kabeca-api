@@ -73,6 +73,26 @@ class EventSuggestionController {
 
     const findResponse = await EventSuggestion.findByPk(id);
 
+    if (!findResponse) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Sugestão de Evento não encontrada',
+      });
+    }
+
+    if (description !== findResponse.description) {
+      const EventSuggestionExists = await EventSuggestion.findOne({
+        where: { description: body.description },
+      });
+
+      if (EventSuggestionExists) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Erro: Já existe um evento com este nome',
+        });
+      }
+    }
+
     const updateResponse = await findResponse.update({ description, value });
     return res.json(updateResponse);
   }
