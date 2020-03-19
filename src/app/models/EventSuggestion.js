@@ -17,13 +17,15 @@ class EventSuggestion extends Model {
     });
 
     this.addHook('afterFind', async event_suggestions => {
-      if (event_suggestions.length) {
-        event_suggestions.map(event_suggestion => {
-          event_suggestion.value /= 100;
-          return null;
-        });
-      } else {
-        event_suggestions.value /= 100;
+      if (event_suggestions) {
+        if (event_suggestions.length) {
+          event_suggestions.map(event_suggestion => {
+            event_suggestion.value /= 100;
+            return null;
+          });
+        } else {
+          event_suggestions.value /= 100;
+        }
       }
     });
 

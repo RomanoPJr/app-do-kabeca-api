@@ -11,7 +11,7 @@ class EventSuggestionController {
     } = req.query;
 
     const pageTotal = await EventSuggestion.count();
-    const admins = await EventSuggestion.findAll({
+    const dataFindAll = await EventSuggestion.findAll({
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       attributes: ['id', 'description', 'value'],
@@ -22,7 +22,7 @@ class EventSuggestionController {
       pageSize,
       pageNumber,
       pageTotal: Math.ceil(pageTotal / pageSize),
-      data: admins,
+      data: dataFindAll,
     });
   }
 

@@ -58,7 +58,7 @@ class OrganizerController {
     }
 
     const organizerExists = await Organizer.findOne({
-      where: { status: ['TESTER', 'ACTIVE'], phone: body.phone },
+      where: { phone: body.phone },
     });
 
     if (organizerExists) {
@@ -117,9 +117,9 @@ class OrganizerController {
         .json({ status: 'error', message: 'Organizador não encontrado' });
     }
 
-    if (phone && phone !== organizer.phone) {
+    if (phone && String(phone) !== String(organizer.phone)) {
       const organizerExists = await Organizer.findOne({
-        where: { status: ['TESTER', 'ACTIVE'], phone },
+        where: { phone },
       });
 
       if (organizerExists) {
