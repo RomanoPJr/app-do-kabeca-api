@@ -1,6 +1,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('organizers', {
+    return queryInterface.createTable('users', {
       id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -13,10 +13,16 @@ module.exports = {
       },
       email: {
         type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
       },
       phone: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique: true,
+      },
+      birth_date: {
+        type: Sequelize.DATEONLY,
       },
       password_hash: {
         type: Sequelize.STRING,
@@ -25,7 +31,12 @@ module.exports = {
       status: {
         type: Sequelize.ENUM,
         values: ['ACTIVE', 'INACTIVE', 'TESTER'],
-        defaultValue: 'TESTER',
+        defaultValue: 'ACTIVE',
+      },
+      type: {
+        type: Sequelize.ENUM,
+        values: ['ADMIN', 'ORGANIZER', 'PLAYER'],
+        allowNull: false,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -39,6 +50,6 @@ module.exports = {
   },
 
   down: queryInterface => {
-    return queryInterface.dropTable('organizers');
+    return queryInterface.dropTable('users');
   },
 };

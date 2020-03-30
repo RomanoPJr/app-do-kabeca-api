@@ -1,34 +1,10 @@
-import jwt from 'jsonwebtoken';
-import { promisify } from 'util';
-import Sequelize from 'sequelize';
-
-import Admin from '../models/Admin';
-import authConfig from '../../config/auth';
+import decode from '../../utils/token';
 
 export default async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const user = await decode(req.headers, res);
 
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Token not provided' });
-  }
-
-  const [, token] = authHeader.split(' ');
-
-  try {
-    const decoded = await promisify(jwt.verify)(token, authConfig.secret);
-
-    const adminExists = await Admin.findOne({
-      where: Sequelize.or({ id: decoded.id }),
-    });
-
-    if (!adminExists) {
-      return res
-        .status(400)
-        .json({ error: 'Somente admistradores podem executar essa ação' });
-    }
-
+  if (user) {
+    req.body.user_request = user.toJSON();
     return next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
   }
 };

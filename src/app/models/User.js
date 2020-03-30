@@ -1,26 +1,27 @@
 import Sequelize, { Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
-class Admin extends Model {
+class User extends Model {
   static init(sequelize) {
     super.init(
       {
-        firstname: Sequelize.STRING,
-        lastname: Sequelize.STRING,
+        name: Sequelize.STRING,
         email: Sequelize.STRING,
         phone: Sequelize.STRING,
+        birth_date: Sequelize.DATEONLY,
         password: Sequelize.VIRTUAL,
         password_hash: Sequelize.STRING,
-        status: Sequelize.ENUM(['ACTIVE', 'INACTIVE']),
+        status: Sequelize.ENUM(['ACTIVE', 'INACTIVE', 'TESTER']),
+        type: Sequelize.ENUM(['ADMIN', 'ORGANIZER', 'PLAYER']),
       },
       {
         sequelize,
       }
     );
 
-    this.addHook('beforeSave', async admin => {
-      if (admin.password) {
-        admin.password_hash = await bcrypt.hash(admin.password, 8);
+    this.addHook('beforeSave', async user => {
+      if (user.password) {
+        user.password_hash = await bcrypt.hash(user.password, 8);
       }
     });
 
@@ -32,4 +33,4 @@ class Admin extends Model {
   }
 }
 
-export default Admin;
+export default User;
