@@ -10,7 +10,7 @@ module.exports = {
       organizer_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'organizers',
+          model: 'users',
           key: 'id',
         },
         onUpdate: 'cascade',
