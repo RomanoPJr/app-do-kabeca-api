@@ -27,7 +27,6 @@ module.exports = {
       },
       banner_url: {
         type: Sequelize.STRING,
-        allowNull: false,
       },
       status: {
         type: Sequelize.ENUM,

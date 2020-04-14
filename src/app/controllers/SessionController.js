@@ -21,10 +21,10 @@ class SessionController {
     const { body } = req;
 
     const schema = Yup.object().shape({
+      password: Yup.string().required('O campo Senha é obrigatório'),
       email: Yup.string()
         .email('O campo Email é inválido')
         .required('O campo Email é obrigatório'),
-      password: Yup.string().required('O campo Senha é obrigatório'),
     });
 
     const validate = await schema.validate(body).catch(err => {
@@ -51,6 +51,19 @@ class SessionController {
       return res
         .status(401)
         .json({ status: 'error', message: 'Usuário ou senha inválidos' });
+    }
+
+    if (user.type === 'ORGANIZER') {
+      const date1 = new Date(user.createdAt);
+      const date2 = new Date(Date.now());
+      const diffDays = parseInt((date2 - date1) / (1000 * 60 * 60 * 24), 10);
+
+      if (diffDays > 30) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'O seu período de validação chegou ao fim.',
+        });
+      }
     }
 
     return res.json({

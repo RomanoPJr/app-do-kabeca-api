@@ -22,6 +22,19 @@ export default async (headers, res) => {
       throw new Error();
     }
 
+    if (user.type === 'ORGANIZER') {
+      const date1 = new Date(user.createdAt);
+      const date2 = new Date(Date.now());
+      const diffDays = parseInt((date2 - date1) / (1000 * 60 * 60 * 24), 10);
+
+      if (diffDays > 30) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'O seu período de validação chegou ao fim.',
+        });
+      }
+    }
+
     return user;
   } catch (error) {
     res.status(401).json({

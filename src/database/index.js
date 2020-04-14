@@ -1,11 +1,14 @@
 import Sequelize from 'sequelize';
 
+import Club from '../app/models/Club';
 import User from '../app/models/User';
+import Event from '../app/models/Event';
+import Sponsor from '../app/models/Sponsor';
 import databaseConfig from '../config/database';
 import EventSuggestion from '../app/models/EventSuggestion';
 import StatuteSuggestion from '../app/models/StatuteSuggestion';
 
-const models = [User, StatuteSuggestion, EventSuggestion];
+const models = [User, Club, Event, StatuteSuggestion, Sponsor, EventSuggestion];
 
 class Database {
   constructor() {

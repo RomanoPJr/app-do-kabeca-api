@@ -48,7 +48,7 @@ class UserController {
       type: Yup.string()
         .required()
         .oneOf(['ADMIN', 'ORGANIZER', 'PLAYER']),
-      birthdate: Yup.date('Campo Data de Nascimento é inválido').when(
+      birth_date: Yup.date('Campo Data de Nascimento é inválido').when(
         'type',
         (type, field) => {
           return type === 'PLAYER'
@@ -124,7 +124,7 @@ class UserController {
       type: Yup.string()
         .required()
         .oneOf(['ADMIN', 'ORGANIZER', 'PLAYER']),
-      birthdate: Yup.date('Campo Data de Nascimento é inválido').when(
+      birth_date: Yup.date('Campo Data de Nascimento é inválido').when(
         'type',
         (type, field) => {
           return type === 'PLAYER'

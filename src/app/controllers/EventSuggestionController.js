@@ -45,7 +45,7 @@ class EventSuggestionController {
     if (EventSuggestionExists) {
       return res.status(400).json({
         status: 'error',
-        message: 'Erro: Já existe um evento com este nome',
+        message: 'Já existe um evento com este nome',
       });
     }
 
@@ -88,7 +88,7 @@ class EventSuggestionController {
       if (EventSuggestionExists) {
         return res.status(400).json({
           status: 'error',
-          message: 'Erro: Já existe um evento com este nome',
+          message: 'Já existe um evento com este nome',
         });
       }
     }
