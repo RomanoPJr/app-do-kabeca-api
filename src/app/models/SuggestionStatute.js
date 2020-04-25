@@ -1,6 +1,6 @@
 import Sequelize, { Model } from 'sequelize';
 
-class StatuteSuggestion extends Model {
+class SuggestionStatute extends Model {
   static init(sequelize) {
     super.init(
       {
@@ -15,4 +15,4 @@ class StatuteSuggestion extends Model {
   }
 }
 
-export default StatuteSuggestion;
+export default SuggestionStatute;

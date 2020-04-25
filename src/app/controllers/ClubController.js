@@ -10,7 +10,7 @@ class ClubController {
     });
 
     if (!findOneData) {
-      return res.status(404).json({ message: 'Nenhum clube configurado' });
+      return res.status(404).json({ error: 'Nenhum clube configurado' });
     }
     const {
       id,
@@ -67,11 +67,11 @@ class ClubController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { message: err.errors } : {};
+      return err.errors ? { error: err.errors } : {};
     });
 
     if (validate.error) {
-      return res.status(400).json({ message: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
 
     const ClubExists = await Club.findOne({
@@ -80,7 +80,7 @@ class ClubController {
 
     if (ClubExists) {
       return res.status(400).json({
-        message: 'Este Organizador já possui um clube',
+        error: 'Este Organizador já possui um clube',
       });
     }
 
@@ -144,24 +144,24 @@ class ClubController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { message: err.errors } : {};
+      return err.errors ? { error: err.errors } : {};
     });
 
     if (validate.error) {
-      return res.status(400).json({ message: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
 
     const findResponse = await Club.findByPk(body_request.id);
 
     if (!findResponse) {
       return res.status(400).json({
-        message: 'Clube não encontrado',
+        error: 'Clube não encontrado',
       });
     }
 
     if (findResponse.user_id !== user_request.id) {
       return res.status(401).json({
-        message: 'Você não possui permissão para editar este clube',
+        error: 'Você não possui permissão para editar este clube',
       });
     }
 

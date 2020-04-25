@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
-import EventSuggestion from '../models/EventSuggestion';
+import SuggestionEvent from '../models/SuggestionEvent';
 
-class EventSuggestionController {
+class SuggestionEventController {
   async index(req, res) {
     const {
       pageNumber = 1,
@@ -10,8 +10,8 @@ class EventSuggestionController {
       orderDirection,
     } = req.query;
 
-    const pageTotal = await EventSuggestion.count();
-    const dataFindAll = await EventSuggestion.findAll({
+    const pageTotal = await SuggestionEvent.count();
+    const dataFindAll = await SuggestionEvent.findAll({
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       attributes: ['id', 'description', 'value'],
@@ -38,18 +38,17 @@ class EventSuggestionController {
       return res.status(400).json({ error: 'Validation Fails' });
     }
 
-    const EventSuggestionExists = await EventSuggestion.findOne({
+    const SuggestionEventExists = await SuggestionEvent.findOne({
       where: { description: body.description },
     });
 
-    if (EventSuggestionExists) {
+    if (SuggestionEventExists) {
       return res.status(400).json({
-        status: 'error',
-        message: 'Já existe um evento com este nome',
+        error: 'Já existe um evento com este nome',
       });
     }
 
-    const createResponse = await EventSuggestion.create(body);
+    const createResponse = await SuggestionEvent.create(body);
     return res.json(createResponse);
   }
 
@@ -71,24 +70,22 @@ class EventSuggestionController {
       return res.status(400).json({ error: validate.error });
     }
 
-    const findResponse = await EventSuggestion.findByPk(id);
+    const findResponse = await SuggestionEvent.findByPk(id);
 
     if (!findResponse) {
       return res.status(400).json({
-        status: 'error',
-        message: 'Sugestão de Evento não encontrada',
+        error: 'Sugestão de Evento não encontrada',
       });
     }
 
     if (description !== findResponse.description) {
-      const EventSuggestionExists = await EventSuggestion.findOne({
+      const SuggestionEventExists = await SuggestionEvent.findOne({
         where: { description: body.description },
       });
 
-      if (EventSuggestionExists) {
+      if (SuggestionEventExists) {
         return res.status(400).json({
-          status: 'error',
-          message: 'Já existe um evento com este nome',
+          error: 'Já existe um evento com este nome',
         });
       }
     }
@@ -99,13 +96,19 @@ class EventSuggestionController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await EventSuggestion.destroy({
+    await SuggestionEvent.destroy({
       where: {
         id,
       },
     });
     return res.status(200).json({});
   }
+
+  async all(req, res) {
+    console.log('TESTE');
+    const dataFindAll = await SuggestionEvent.findAll();
+    res.json(dataFindAll);
+  }
 }
 
-export default new EventSuggestionController();
+export default new SuggestionEventController();

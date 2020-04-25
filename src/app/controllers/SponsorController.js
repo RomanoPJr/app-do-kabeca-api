@@ -68,7 +68,7 @@ class SponsorController {
       banner_url: Yup.string('Banner é inválido'),
       status: Yup.string()
         .required('Status é obrigatório')
-        .oneOf(['ACTIVE', 'INACTIVE'], 'Status é inválido'),
+        .oneOf(['ATIVO', 'INATIVO'], 'Status é inválido'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -76,7 +76,7 @@ class SponsorController {
     });
 
     if (validate.error) {
-      return res.status(400).json({ error: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
     const dataFindOne = await Sponsor.findOne({
       where: { name: body_request.name, club_id: dataFindOneClub.id },
@@ -121,7 +121,7 @@ class SponsorController {
       banner_url: Yup.string('Banner é inválido'),
       status: Yup.string()
         .required('Email é obrigatório')
-        .oneOf(['ACTIVE', 'INACTIVE'], 'Status é inválido'),
+        .oneOf(['ATIVO', 'INATIVO'], 'Status é inválido'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {

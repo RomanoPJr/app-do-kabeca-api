@@ -11,7 +11,7 @@ class User extends Model {
         birth_date: Sequelize.DATEONLY,
         password: Sequelize.VIRTUAL,
         password_hash: Sequelize.STRING,
-        status: Sequelize.ENUM(['ACTIVE', 'INACTIVE', 'TESTER']),
+        status: Sequelize.ENUM(['ATIVO', 'INATIVO', 'TESTE']),
         type: Sequelize.ENUM(['ADMIN', 'ORGANIZER', 'PLAYER']),
       },
       {

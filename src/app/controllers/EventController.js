@@ -68,11 +68,11 @@ class EventController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { message: err.errors } : {};
+      return err.errors ? { error: err.errors } : {};
     });
 
     if (validate.error) {
-      return res.status(400).json({ error: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
     const EventExists = await Event.findOne({
       where: { description: body_request.description },
@@ -112,7 +112,6 @@ class EventController {
 
     if (!findResponse) {
       return res.status(400).json({
-        status: 'error',
         error: 'Evento não encontrado',
       });
     }
@@ -124,7 +123,6 @@ class EventController {
 
       if (EventExists) {
         return res.status(400).json({
-          status: 'error',
           error: 'Já existe um evento com este nome',
         });
       }

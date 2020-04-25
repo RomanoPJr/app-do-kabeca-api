@@ -4,11 +4,22 @@ import Club from '../app/models/Club';
 import User from '../app/models/User';
 import Event from '../app/models/Event';
 import Sponsor from '../app/models/Sponsor';
+import Payment from '../app/models/Payment';
 import databaseConfig from '../config/database';
-import EventSuggestion from '../app/models/EventSuggestion';
-import StatuteSuggestion from '../app/models/StatuteSuggestion';
+import ClubPlayer from '../app/models/ClubPlayer';
+import SuggestionEvent from '../app/models/SuggestionEvent';
+import SuggestionStatute from '../app/models/SuggestionStatute';
 
-const models = [User, Club, Event, StatuteSuggestion, Sponsor, EventSuggestion];
+const models = [
+  User,
+  Club,
+  Event,
+  Sponsor,
+  Payment,
+  ClubPlayer,
+  SuggestionEvent,
+  SuggestionStatute,
+];
 
 class Database {
   constructor() {
@@ -17,7 +28,9 @@ class Database {
 
   init() {
     this.connection = new Sequelize(databaseConfig);
-    models.map(model => model.init(this.connection));
+    models
+      .map(model => model.init(this.connection))
+      .map(model => model.associate && model.associate(this.connection.models));
   }
 }
 

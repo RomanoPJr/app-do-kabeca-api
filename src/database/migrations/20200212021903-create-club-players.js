@@ -1,6 +1,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('statutes', {
+    return queryInterface.createTable('club_players', {
       id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -17,14 +17,31 @@ module.exports = {
         onDelete: 'cascade',
         allowNull: false,
       },
-      description: {
-        type: Sequelize.STRING,
+      user_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onUpdate: 'cascade',
+        onDelete: 'cascade',
         allowNull: false,
       },
-      status: {
+      position: {
         type: Sequelize.ENUM,
-        values: ['ATIVO', 'INATIVO'],
-        defaultValue: 'ATIVO',
+        values: ['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'],
+        allowNull: false,
+      },
+      type: {
+        type: Sequelize.ENUM,
+        values: ['JOGADOR', 'COLABORADOR'],
+        allowNull: false,
+      },
+      invite: {
+        type: Sequelize.ENUM,
+        values: ['ACEITO', 'AGUARDANDO', 'NEGADO', 'BLOQUEADO'],
+        defaultValue: 'AGUARDANDO',
+        allowNull: false,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -38,6 +55,6 @@ module.exports = {
   },
 
   down: queryInterface => {
-    return queryInterface.dropTable('statutes');
+    return queryInterface.dropTable('club_players');
   },
 };

@@ -1,65 +1,44 @@
 import * as Yup from 'yup';
-import Sequelize, { Op } from 'sequelize';
+import Sequelize from 'sequelize';
 import User from '../models/User';
 
-class UserController {
+class AdminController {
   async index(req, res) {
-    const { field, value } = req.query;
+    const { pageNumber = 1, pageSize = 10 } = req.query;
+
+    const countData = await User.count();
 
     const findAllData = await User.findAll({
-      where: {
-        [field]: { [Op.like]: `%${value.toUpperCase()}%` },
-      },
-      limit: 10,
-      attributes: ['id', 'name', 'phone', 'type'],
+      limit: pageSize,
+      where: { type: 'ADMIN' },
+      order: [['name', 'asc']],
+      offset: (pageNumber - 1) * pageSize,
+      attributes: ['id', 'name', 'email', 'phone', 'birth_date', 'status'],
     });
 
-    return res.json(findAllData);
-  }
-
-  async findOne(req, res) {
-    const { field, value } = req.query;
-
-    const findAllData = await User.findOne({
-      where: { [field]: value },
-      attributes: [
-        'id',
-        'name',
-        'birth_date',
-        'email',
-        'phone',
-        'status',
-        'type',
-      ],
+    return res.json({
+      pageSize,
+      pageNumber,
+      pageTotal: Math.ceil(countData / pageSize),
+      data: findAllData,
     });
-
-    return res.json(findAllData);
   }
 
   async store(req, res) {
     const { body } = req;
 
     const schema = Yup.object().shape({
-      name: Yup.string().required('Campo Nome é obrigatório'),
+      name: Yup.string()
+        .required('Campo Nome é obrigatório')
+        .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       phone: Yup.string()
         .required('Campo Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
       email: Yup.string()
         .required('Campo Email é obrigatório')
         .email('Campo Email é inválido'),
-      status: Yup.string()
-        .required('Campo Email é obrigatório')
-        .oneOf(['ATIVO', 'INATIVO', 'TESTE']),
-      type: Yup.string()
-        .required()
-        .oneOf(['ADMIN', 'ORGANIZER', 'PLAYER']),
-      birth_date: Yup.date('Campo Data de Nascimento é inválido').when(
-        'type',
-        (type, field) => {
-          return type === 'PLAYER'
-            ? field.required('Campo Data de Nascimento é obrigatório')
-            : field;
-        }
+      birth_date: Yup.date('Campo Data de Nascimento é inválido').required(
+        'Campo Data de Nascimento é obrigatório'
       ),
       password: Yup.string()
         .required('Campo Senha é obrigatório')
@@ -77,21 +56,6 @@ class UserController {
       return res.status(400).json({ error: validate.error });
     }
 
-    if (
-      (body.type === 'ORGANIZER' || body.type === 'ADMIN') &&
-      body.user_request.type !== 'ADMIN'
-    ) {
-      return res.status(401).json({
-        error: `Somente administradores podem executar esta ação`,
-      });
-    }
-
-    if (body.type === 'PLAYER' && body.user_request.type !== 'ORGANIZER') {
-      return res.status(401).json({
-        error: `Somente organizadores podem executar esta ação`,
-      });
-    }
-
     const userExists = await User.findOne({
       where: Sequelize.or({ phone: body.phone }, { email: body.email }),
     });
@@ -101,6 +65,9 @@ class UserController {
         error: `Número de telefone ou email já existem`,
       });
     }
+
+    body.status = 'ATIVO';
+    body.type = 'ADMIN';
 
     const { id, name, email, phone, type, status } = await User.create(body);
 
@@ -114,24 +81,21 @@ class UserController {
     const { body } = req;
 
     const schema = Yup.object().shape({
-      name: Yup.string().required('Campo Nome é obrigatório'),
+      name: Yup.string()
+        .required('Campo Nome é obrigatório')
+        .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       phone: Yup.string()
         .required('Campo Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
       email: Yup.string()
         .required('Campo Email é obrigatório')
         .email('Campo Email é inválido'),
-      type: Yup.string()
-        .required()
-        .oneOf(['ADMIN', 'ORGANIZER', 'PLAYER']),
-      birth_date: Yup.date('Campo Data de Nascimento é inválido').when(
-        'type',
-        (type, field) => {
-          return type === 'PLAYER'
-            ? field.required('Campo Data de Nascimento é obrigatório')
-            : field;
-        }
+      birth_date: Yup.date('Campo Data de Nascimento é inválido').required(
+        'Campo Data de Nascimento é obrigatório'
       ),
+      status: Yup.string()
+        .required('Tipo é obrigatório')
+        .oneOf(['ATIVO', 'INATIVO'], 'Tipo é inválido'),
       password: Yup.string().when('oldPassword', (oldPassword, field) =>
         oldPassword
           ? field
@@ -158,32 +122,15 @@ class UserController {
 
     const user = await User.findByPk(body.id);
 
-    if (
-      (user.type === 'ORGANIZER' || user.type === 'ADMIN') &&
-      body.user_request.type !== 'ADMIN'
-    ) {
-      return res.status(401).json({
-        error: `Somente administradores podem executar esta ação`,
-      });
-    }
-
-    if (
-      user.type === 'PLAYER' &&
-      body.user_request.type !== 'ORGANIZER' &&
-      body.user_request.type !== 'PLAYER'
-    ) {
-      return res.status(401).json({
-        error: `Somente pessoas autorizadas podem executar esta ação`,
-      });
-    }
-
     if (body.email && body.email !== user.email) {
       const userExists = await User.findOne({
         where: { email: body.email },
       });
 
       if (userExists) {
-        return res.status(400).json({ error: `Email já existe.` });
+        return res
+          .status(400)
+          .json({ error: 'Já existe um usuário com este email ou telefone' });
       }
     }
 
@@ -193,18 +140,13 @@ class UserController {
       });
 
       if (userExists) {
-        return res.status(400).json({ error: `Telefone já existe.` });
+        return res
+          .status(400)
+          .json({ error: 'Já existe um usuário com este email ou telefone' });
       }
     }
 
-    if (body.oldPassword && !(await user.checkPassword(body.oldPassword))) {
-      return res.status(401).json({
-        error: `A senha atual está incorreta.`,
-      });
-    }
-
     const { id, name, email, phone, type, status } = await user.update(body);
-
     return res.json({ id, name, email, phone, type, status });
   }
 
@@ -219,4 +161,4 @@ class UserController {
   }
 }
 
-export default new UserController();
+export default new AdminController();

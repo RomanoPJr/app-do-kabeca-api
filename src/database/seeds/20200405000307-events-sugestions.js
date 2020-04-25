@@ -1,7 +1,7 @@
 module.exports = {
   up: queryInterface => {
     return queryInterface.bulkInsert(
-      'event_suggestions',
+      'suggestion_events',
       [
         {
           description: 'VITORIA',
@@ -63,6 +63,6 @@ module.exports = {
   },
 
   down: queryInterface => {
-    return queryInterface.bulkDelete('event_suggestions', null, {});
+    return queryInterface.bulkDelete('suggestion_events', null, {});
   },
 };

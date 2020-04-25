@@ -7,14 +7,21 @@ import authConfig from '../../config/auth';
 
 class SessionController {
   async index(req, res) {
-    const user = await decode(req.headers, res);
+    const decodedToken = await decode(req.headers, res);
 
-    if (user) {
-      const { name } = user;
-      return res.json({ name });
+    if (!decodedToken) {
+      return res.status(401).json({ error: 'Token inválido' });
     }
 
-    return res.status(401).json({ message: 'Usuário não encontrado' });
+    const user = await User.findByPk(decodedToken.id, {
+      attributes: ['name', 'type', 'status'],
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuário não encontrado' });
+    }
+
+    return res.json(user);
   }
 
   async store(req, res) {
@@ -32,25 +39,20 @@ class SessionController {
     });
 
     if (validate.error) {
-      return res
-        .status(400)
-        .json({ status: 'error', message: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
 
     const user = await User.findOne({
       where: { email: body.email },
+      attributes: ['id', 'name', 'password_hash', 'type', 'createdAt'],
     });
 
     if (!user) {
-      return res
-        .status(401)
-        .json({ status: 'error', message: 'Usuário ou senha inválidos' });
+      return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
 
     if (!(await user.checkPassword(body.password))) {
-      return res
-        .status(401)
-        .json({ status: 'error', message: 'Usuário ou senha inválidos' });
+      return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
 
     if (user.type === 'ORGANIZER') {
@@ -60,15 +62,15 @@ class SessionController {
 
       if (diffDays > 30) {
         return res.status(401).json({
-          status: 'error',
-          message: 'O seu período de validação chegou ao fim.',
+          error: 'O seu período de validação chegou ao fim.',
         });
       }
     }
 
     return res.json({
-      admin: {
+      user: {
         name: user.name,
+        type: user.type,
       },
       token: jwt.sign({ id: user.id }, authConfig.secret, {
         expiresIn: authConfig.expiresin,

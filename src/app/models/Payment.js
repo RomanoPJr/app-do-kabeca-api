@@ -1,14 +1,13 @@
 import Sequelize, { Model } from 'sequelize';
 
-class Sponsor extends Model {
+class Payment extends Model {
   static init(sequelize) {
     super.init(
       {
         club_id: Sequelize.INTEGER,
-        name: Sequelize.STRING,
+        user_id: Sequelize.INTEGER,
         value: Sequelize.INTEGER,
-        banner_url: Sequelize.TEXT,
-        status: Sequelize.ENUM('ATIVO', 'INATIVO'),
+        referent: Sequelize.DATEONLY,
       },
       {
         sequelize,
@@ -17,6 +16,10 @@ class Sponsor extends Model {
 
     return this;
   }
+
+  static associate(models) {
+    this.belongsTo(models.User, { foreignKey: 'user_id' });
+  }
 }
 
-export default Sponsor;
+export default Payment;

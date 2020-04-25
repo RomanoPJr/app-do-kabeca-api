@@ -1,16 +1,14 @@
 import * as Yup from 'yup';
-import StatuteSuggestion from '../models/StatuteSuggestion';
+import SuggestionStatute from '../models/SuggestionStatute';
 
-class StatuteSuggestionController {
+class SuggestionStatuteController {
   async index(req, res) {
-    const findAllResponse = await StatuteSuggestion.findAll({
+    const findAllResponse = await SuggestionStatute.findAll({
       limit: 1,
       order: [['id', 'asc']],
     });
 
-    res.json({
-      data: findAllResponse,
-    });
+    res.json(findAllResponse[0]);
   }
 
   async store(req, res) {
@@ -24,7 +22,7 @@ class StatuteSuggestionController {
       return res.status(400).json({ error: 'Validation Fails' });
     }
 
-    const createResponse = await StatuteSuggestion.create(body);
+    const createResponse = await SuggestionStatute.create(body);
     return res.json(createResponse);
   }
 
@@ -41,7 +39,7 @@ class StatuteSuggestionController {
       return res.status(400).json({ error: 'Validation Fails' });
     }
 
-    const findResponse = await StatuteSuggestion.findByPk(id);
+    const findResponse = await SuggestionStatute.findByPk(id);
 
     const updateResponse = await findResponse.update({ description });
     return res.json(updateResponse);
@@ -49,7 +47,7 @@ class StatuteSuggestionController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await StatuteSuggestion.destroy({
+    await SuggestionStatute.destroy({
       where: {
         id,
       },
@@ -58,4 +56,4 @@ class StatuteSuggestionController {
   }
 }
 
-export default new StatuteSuggestionController();
+export default new SuggestionStatuteController();

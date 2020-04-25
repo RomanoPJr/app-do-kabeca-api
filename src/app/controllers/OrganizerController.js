@@ -4,15 +4,23 @@ import User from '../models/User';
 
 class OrganizerController {
   async index(req, res) {
-    const { id, name, status, type } = await User.findByPk(
-      req.body.user_request.id
-    );
+    const { pageNumber = 1, pageSize = 10 } = req.query;
+
+    const countData = await User.count();
+
+    const findAllData = await User.findAll({
+      limit: pageSize,
+      where: { type: 'ORGANIZER' },
+      order: [['name', 'asc']],
+      offset: (pageNumber - 1) * pageSize,
+      attributes: ['id', 'name', 'email', 'phone', 'birth_date', 'status'],
+    });
 
     return res.json({
-      id,
-      name,
-      status,
-      type,
+      pageSize,
+      pageNumber,
+      pageTotal: Math.ceil(countData / pageSize),
+      data: findAllData,
     });
   }
 
@@ -20,7 +28,9 @@ class OrganizerController {
     const { body } = req;
 
     const schema = Yup.object().shape({
-      name: Yup.string().required('Nome é obrigatório'),
+      name: Yup.string()
+        .required('Nome é obrigatório')
+        .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       phone: Yup.string()
         .required('Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
@@ -30,6 +40,9 @@ class OrganizerController {
       birth_date: Yup.date('Data de Nascimento é inválido').required(
         'Data de Nascimento é obrigatória'
       ),
+      status: Yup.string()
+        .required('Tipo é obrigatório')
+        .oneOf(['ATIVO', 'INATIVO', 'TESTE'], 'Status é inválido'),
       password: Yup.string()
         .required('Senha é obrigatório')
         .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros'),
@@ -43,13 +56,8 @@ class OrganizerController {
     });
 
     if (validate.error) {
-      return res
-        .status(400)
-        .json({ status: 'error', message: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
-
-    body.type = 'ORGANIZER';
-    body.status = 'TESTER';
 
     const userExists = await User.findOne({
       where: Sequelize.or({ phone: body.phone }, { email: body.email }),
@@ -57,10 +65,11 @@ class OrganizerController {
 
     if (userExists) {
       return res.status(400).json({
-        status: 'error',
-        message: `Número de telefone ou email já existem`,
+        error: `Número de telefone ou email já existem`,
       });
     }
+
+    body.type = 'ORGANIZER';
 
     const {
       id,
@@ -87,7 +96,9 @@ class OrganizerController {
     const { body } = req;
 
     const schema = Yup.object().shape({
-      name: Yup.string().required('Nome é obrigatório'),
+      name: Yup.string()
+        .required('Nome é obrigatório')
+        .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       phone: Yup.string()
         .required('Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
@@ -97,18 +108,13 @@ class OrganizerController {
       birth_date: Yup.date('Data de Nascimento é inválido').required(
         'Data de Nascimento é obrigatória'
       ),
-      password: Yup.string().when('oldPassword', (oldPassword, field) =>
-        oldPassword
-          ? field
-              .required('Campo Senha é obrigatório')
-              .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros')
-          : field
-      ),
+      password: Yup.string(),
       confirmPassword: Yup.string().when('password', (password, field) =>
         password
           ? field
               .required('Campo Confirmar Senha é obrigatório')
               .oneOf([Yup.ref('password')], 'As senhas não coincidem')
+              .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros')
           : field
       ),
     });
@@ -118,12 +124,10 @@ class OrganizerController {
     });
 
     if (validate.error) {
-      return res
-        .status(400)
-        .json({ status: 'error', message: `${validate.error}` });
+      return res.status(400).json({ error: validate.error });
     }
 
-    const user = await User.findByPk(body.user_request.id);
+    const user = await User.findByPk(body.id);
 
     if (body.email && body.email !== user.email) {
       const userExists = await User.findOne({
@@ -132,8 +136,7 @@ class OrganizerController {
 
       if (userExists) {
         return res.status(400).json({
-          status: 'error',
-          message: `Número de telefone ou email já existem.`,
+          error: `Número de telefone ou email já existem.`,
         });
       }
     }
@@ -145,33 +148,12 @@ class OrganizerController {
 
       if (userExists) {
         return res.status(400).json({
-          status: 'error',
-          message: `Número de telefone ou email já existem`,
+          error: `Número de telefone ou email já existem`,
         });
       }
     }
 
-    if (body.oldPassword && !(await user.checkPassword(body.oldPassword))) {
-      return res.status(401).json({
-        status: 'error',
-        message: `A senha atual está incorreta.`,
-      });
-    }
-
-    const updateBody = {
-      name: body.name,
-      email: body.email,
-      phone: body.phone,
-      birth_date: body.birth_date,
-    };
-
-    if (body.password && body.password !== '') {
-      updateBody.password = body.password;
-    }
-
-    const { id, name, email, phone, type, status } = await user.update(
-      updateBody
-    );
+    const { id, name, email, phone, type, status } = await user.update(body);
 
     return res.json({ id, name, email, phone, type, status });
   }
