@@ -2,10 +2,10 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('statutes', {
       id: {
-        type: Sequelize.INTEGER,
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
+        type: Sequelize.INTEGER,
       },
       club_id: {
         type: Sequelize.INTEGER,
@@ -18,25 +18,18 @@ module.exports = {
         allowNull: false,
       },
       description: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      status: {
-        type: Sequelize.ENUM,
-        values: ['ATIVO', 'INATIVO'],
-        defaultValue: 'ATIVO',
+        type: Sequelize.TEXT,
       },
       created_at: {
-        type: Sequelize.DATE,
         allowNull: false,
+        type: Sequelize.DATE,
       },
       updated_at: {
-        type: Sequelize.DATE,
         allowNull: false,
+        type: Sequelize.DATE,
       },
     });
   },
-
   down: queryInterface => {
     return queryInterface.dropTable('statutes');
   },

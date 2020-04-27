@@ -105,7 +105,6 @@ class SuggestionEventController {
   }
 
   async all(req, res) {
-    console.log('TESTE');
     const dataFindAll = await SuggestionEvent.findAll();
     res.json(dataFindAll);
   }

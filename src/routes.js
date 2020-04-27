@@ -11,6 +11,7 @@ import PlayerController from './app/controllers/PlayerController';
 import SessionController from './app/controllers/SessionController';
 import PaymentController from './app/controllers/PaymentController';
 import SponsorController from './app/controllers/SponsorController';
+import StatuteController from './app/controllers/StatuteController';
 import OrganizerController from './app/controllers/OrganizerController';
 import SuggestionEventController from './app/controllers/SuggestionEventController';
 import SuggestionStatuteController from './app/controllers/SuggestionStatuteController';
@@ -80,6 +81,11 @@ routes.get('/sponsor', authOrganizer, SponsorController.index);
 routes.post('/sponsor', authOrganizer, SponsorController.store);
 routes.put('/sponsor', authOrganizer, SponsorController.update);
 routes.delete('/sponsor/:id', authOrganizer, SponsorController.delete);
+
+routes.get('/statute', authOrganizer, StatuteController.index);
+routes.post('/statute', authOrganizer, StatuteController.store);
+routes.put('/statute', authOrganizer, StatuteController.update);
+routes.delete('/statute/:id', authOrganizer, StatuteController.delete);
 
 routes.get('/user', authOrganizer, UserController.index);
 routes.get('/user/find', authOrganizer, UserController.findOne);
