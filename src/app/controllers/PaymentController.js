@@ -48,7 +48,7 @@ class PaymentController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { error: err.errors } : {};
+      return err.errors ? { error: err.message } : {};
     });
 
     if (validate.error) {
@@ -85,8 +85,7 @@ class PaymentController {
     const { club_id } = user_request;
 
     const schema = Yup.object().shape({
-      user_id: Yup.string().required('Nenhum jogador foi informado'),
-      value: Yup.numbe().required('Valor é obrigatório'),
+      value: Yup.number().required('Valor é obrigatório'),
       referent: Yup.date('Referência é inválida').required(
         'Referente à é obrigatório'
       ),
@@ -110,12 +109,6 @@ class PaymentController {
       });
     }
 
-    if (findPayment.user_id !== body_request.user_id) {
-      return res.status(400).json({
-        error:
-          'Você não pode mudar o jogador de um pagamento, caso seja necessário exclua o registro e crie novamente',
-      });
-    }
     const { value, referent } = body_request;
     await findPayment.update({
       value,

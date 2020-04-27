@@ -40,9 +40,10 @@ class OrganizerController {
       birth_date: Yup.date('Data de Nascimento é inválido').required(
         'Data de Nascimento é obrigatória'
       ),
-      status: Yup.string()
-        .required('Tipo é obrigatório')
-        .oneOf(['ATIVO', 'INATIVO', 'TESTE'], 'Status é inválido'),
+      status: Yup.string().oneOf(
+        ['ATIVO', 'INATIVO', 'TESTE'],
+        'Status é inválido'
+      ),
       password: Yup.string()
         .required('Senha é obrigatório')
         .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros'),
