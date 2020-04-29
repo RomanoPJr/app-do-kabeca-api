@@ -68,7 +68,7 @@ class EventController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { error: err.errors } : {};
+      return err.message ? { error: err.message } : {};
     });
 
     if (validate.error) {
@@ -101,7 +101,7 @@ class EventController {
     });
 
     const validate = await schema.validate(body).catch(err => {
-      return err.errors ? { error: err.errors } : {};
+      return err.message ? { error: err.message } : {};
     });
 
     if (validate.error) {

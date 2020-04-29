@@ -50,15 +50,7 @@ class PlayerController {
         {
           where: userFilter,
           model: User,
-          attributes: [
-            'id',
-            'name',
-            'phone',
-            'status',
-            'birth_date',
-            'email',
-            'type',
-          ],
+          attributes: ['id', 'name', 'phone', 'status', 'birth_date', 'type'],
         },
       ],
     });
@@ -94,12 +86,7 @@ class PlayerController {
       phone: Yup.string()
         .required('Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
-      email: Yup.string()
-        .email('Email é inválido')
-        .required('Email é obrigatório'),
-      birth_date: Yup.date('Data de Nascimento é inválido').required(
-        'Data de Nascimento é obrigatória'
-      ),
+      email: Yup.string().email('Email é inválido'),
       position: Yup.string()
         .required('Posição é obrigatória')
         .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
@@ -120,7 +107,7 @@ class PlayerController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { error: err.errors } : {};
+      return err.message ? { error: err.message } : {};
     });
 
     if (validate.error) {
@@ -186,12 +173,7 @@ class PlayerController {
       phone: Yup.string()
         .required('Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
-      email: Yup.string()
-        .email('Email é inválido')
-        .required('Email é obrigatório'),
-      birth_date: Yup.date('Data de Nascimento é inválido').required(
-        'Data de Nascimento é obrigatória'
-      ),
+      email: Yup.string().required('Email é obrigatório'),
       position: Yup.string()
         .required('Posição é obrigatória')
         .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
@@ -215,7 +197,7 @@ class PlayerController {
     });
 
     const validate = await schema.validate(body_request).catch(err => {
-      return err.errors ? { error: err.errors } : {};
+      return err.message ? { error: err.message } : {};
     });
 
     if (validate.error) {
