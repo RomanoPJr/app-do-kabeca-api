@@ -173,7 +173,7 @@ class PlayerController {
       phone: Yup.string()
         .required('Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
-      email: Yup.string().required('Email é obrigatório'),
+      email: Yup.string(),
       position: Yup.string()
         .required('Posição é obrigatória')
         .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
