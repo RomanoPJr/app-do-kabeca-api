@@ -40,17 +40,17 @@ class PlayerController {
       userFilter[field] = { [Op.like]: `%${value}%` };
     }
 
-    const dataFindAll = await ClubPlayer.findAll({
-      where: { club_id: user_request.club_id },
-      offset: (pageNumber - 1) * pageSize,
+    const dataFindAll = await User.findAll({
       limit: pageSize,
-      attributes: ['id', 'position', 'type', 'user_id', 'invite'],
-      order: [['id', 'asc']],
+      where: userFilter,
+      order: [['name', 'asc']],
+      offset: (pageNumber - 1) * pageSize,
+      attributes: ['id', 'name', 'phone', 'status', 'birth_date', 'type'],
       include: [
         {
-          where: userFilter,
-          model: User,
-          attributes: ['id', 'name', 'phone', 'status', 'birth_date', 'type'],
+          where: { club_id: user_request.club_id },
+          model: ClubPlayer,
+          attributes: ['id', 'position', 'type', 'user_id', 'invite'],
         },
       ],
     });
@@ -85,25 +85,14 @@ class PlayerController {
         .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       phone: Yup.string()
         .required('Telefone é obrigatório')
-        .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
-      email: Yup.string().email('Email é inválido'),
+        .min(10, 'Telefone precisa ter entre 10 e 11 caracteres')
+        .max(11, 'Telefone precisa ter entre 10 e 11 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
         .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
       type: Yup.string()
         .required('Tipo é obrigatório')
         .oneOf(['JOGADOR', 'COLABORADOR'], 'Tipo é inválido'),
-      password: Yup.string().min(
-        6,
-        'Senha deve possuir no mínimo 6 letras ou numeros'
-      ),
-      confirmPassword: Yup.string().when('password', (password, field) =>
-        password
-          ? field
-              .required()
-              .oneOf([Yup.ref('password')], 'As senhas não coincidem')
-          : field
-      ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -117,10 +106,10 @@ class PlayerController {
     // SET CLUB PLAYER DATA
     const { type, position, status } = body_request;
     const clubPlayerData = {
-      club_id,
       type,
-      position,
       status,
+      club_id,
+      position,
     };
 
     // FIND AN USER BY PHONE
@@ -144,10 +133,9 @@ class PlayerController {
       }
       clubPlayerData.user_id = dataFindOneUser.id;
     } else {
-      const { name, phone, password, birth_date, email } = body_request;
+      const { name, phone, password, birth_date } = body_request;
       const { id } = await User.create({
         name,
-        email,
         phone,
         password,
         birth_date,
@@ -172,8 +160,8 @@ class PlayerController {
         .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       phone: Yup.string()
         .required('Telefone é obrigatório')
-        .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
-      email: Yup.string(),
+        .min(10, 'Telefone precisa ter entre 10 e 11 caracteres')
+        .max(11, 'Telefone precisa ter entre 10 e 11 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
         .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
@@ -183,17 +171,6 @@ class PlayerController {
       invite: Yup.string()
         .required('Status é obrigatório')
         .oneOf(['AGUARDANDO', 'ACEITO', 'BLOQUEADO'], 'Status é inválido'),
-      password: Yup.string().min(
-        6,
-        'Senha deve possuir no mínimo 6 letras ou numeros'
-      ),
-      confirmPassword: Yup.string().when('password', (password, field) =>
-        password
-          ? field
-              .required()
-              .oneOf([Yup.ref('password')], 'As senhas não coincidem')
-          : field
-      ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -241,49 +218,10 @@ class PlayerController {
       }
     }
 
-    if (body_request.email !== findUser.email) {
-      if (findUser.type === 'ORGANIZER') {
-        return res.status(400).json({
-          error:
-            'Este jogador tambem é um organizador, somente ele pode alterar suas informações de contato',
-        });
-      }
+    const { name, phone, birth_date, position, type, invite } = body_request;
 
-      const dataFindOneUser = await User.findOne({
-        where: { email: body_request.email },
-      });
-
-      if (dataFindOneUser) {
-        return res.status(400).json({
-          error: 'Já existe um usuário com este email ou telefone',
-        });
-      }
-    }
-
-    const {
-      name,
-      phone,
-      email,
-      birth_date,
-      position,
-      type,
-      invite,
-      password,
-    } = body_request;
-
-    await findUser.update({
-      name,
-      phone,
-      email,
-      birth_date,
-      password,
-    });
-
-    await findClubPlayer.update({
-      position,
-      type,
-      invite,
-    });
+    await findUser.update({ name, phone, birth_date });
+    await findClubPlayer.update({ position, type, invite });
 
     return res.json({ message: 'Registro Atualizado com sucesso!' });
   }
