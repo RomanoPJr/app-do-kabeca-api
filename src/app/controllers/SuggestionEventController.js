@@ -15,7 +15,7 @@ class SuggestionEventController {
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       attributes: ['id', 'description', 'value'],
-      order: [[orderBy || 'id', orderDirection || 'asc']],
+      order: [[orderBy || 'value', orderDirection || 'desc']],
     });
 
     res.json({

@@ -27,7 +27,7 @@ class EventController {
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       attributes: ['id', 'description', 'value'],
-      order: [['id', 'asc']],
+      order: [['value', 'desc']],
     });
 
     return res.json({
