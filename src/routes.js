@@ -75,7 +75,7 @@ routes.delete('/event/:id', authOrganizer, EventController.delete);
 routes.get('/player', authOrganizer, PlayerController.index);
 routes.post('/player', authOrganizer, PlayerController.store);
 routes.put('/player', authOrganizer, PlayerController.update);
-routes.delete('/player/:user_id', authOrganizer, PlayerController.delete);
+routes.delete('/player/:id', authOrganizer, PlayerController.delete);
 routes.put(
   '/player/:id/reset_password',
   authOrganizer,
