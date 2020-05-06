@@ -226,6 +226,40 @@ class PlayerController {
     return res.json({ message: 'Registro Atualizado com sucesso!' });
   }
 
+  async resetPassword(req, res) {
+    const { id } = req.params;
+    const { club_id } = req.body.user_request;
+
+    const findClubPlayer = await ClubPlayer.findOne({
+      where: { id, club_id },
+    });
+
+    if (!findClubPlayer) {
+      return res.status(400).json({
+        error: 'Jogador não é membro do seu clube',
+      });
+    }
+
+    const findUser = await User.findByPk(findClubPlayer.user_id);
+
+    if (!findUser) {
+      return res.status(400).json({
+        error: 'Jogador não encontrado',
+      });
+    }
+
+    if (findUser.type === 'ORGANIZER') {
+      return res.status(400).json({
+        error:
+          'Este usuário é um organizador, somente o administrador pode alterar a senha.',
+      });
+    }
+
+    await findUser.update({ password_hash: null });
+
+    return res.json({ message: 'Senha atualizada com sucesso!' });
+  }
+
   async delete(req, res) {
     const { id } = req.params;
     await ClubPlayer.destroy({
