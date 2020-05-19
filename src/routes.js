@@ -9,10 +9,10 @@ import AdminController from './app/controllers/AdminController';
 import EventController from './app/controllers/EventController';
 import PlayerController from './app/controllers/PlayerController';
 import SessionController from './app/controllers/SessionController';
-import PaymentController from './app/controllers/PaymentController';
 import SponsorController from './app/controllers/SponsorController';
 import StatuteController from './app/controllers/StatuteController';
 import OrganizerController from './app/controllers/OrganizerController';
+import MonthlyPaymentController from './app/controllers/MonthlyPaymentController';
 import SuggestionEventController from './app/controllers/SuggestionEventController';
 import SuggestionStatuteController from './app/controllers/SuggestionStatuteController';
 
@@ -76,6 +76,7 @@ routes.get('/player', authOrganizer, PlayerController.index);
 routes.post('/player', authOrganizer, PlayerController.store);
 routes.put('/player', authOrganizer, PlayerController.update);
 routes.delete('/player/:id', authOrganizer, PlayerController.delete);
+// routes.get('/player/payment', authOrganizer, PlayerController.player_payment);
 routes.put(
   '/player/:id/reset_password',
   authOrganizer,
@@ -95,9 +96,9 @@ routes.delete('/statute/:id', authOrganizer, StatuteController.delete);
 routes.get('/user', authOrganizer, UserController.index);
 routes.get('/user/find', authOrganizer, UserController.findOne);
 
-routes.get('/payment', authOrganizer, PaymentController.index);
-routes.post('/payment', authOrganizer, PaymentController.store);
-routes.put('/payment', authOrganizer, PaymentController.update);
-routes.delete('/payment/:id', authOrganizer, PaymentController.delete);
+routes.get('/payment', authOrganizer, MonthlyPaymentController.index);
+routes.post('/payment', authOrganizer, MonthlyPaymentController.store);
+routes.put('/payment', authOrganizer, MonthlyPaymentController.update);
+routes.delete('/payment/:id', authOrganizer, MonthlyPaymentController.delete);
 
 export default routes;

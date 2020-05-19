@@ -8,6 +8,7 @@ import Payment from '../app/models/Payment';
 import Statute from '../app/models/Statute';
 import databaseConfig from '../config/database';
 import ClubPlayer from '../app/models/ClubPlayer';
+import MonthlyPayment from '../app/models/MonthlyPayment';
 import SuggestionEvent from '../app/models/SuggestionEvent';
 import SuggestionStatute from '../app/models/SuggestionStatute';
 
@@ -17,6 +18,7 @@ const models = [
   Event,
   Sponsor,
   Payment,
+  MonthlyPayment,
   Statute,
   ClubPlayer,
   SuggestionEvent,
