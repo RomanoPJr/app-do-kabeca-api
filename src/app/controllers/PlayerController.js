@@ -50,7 +50,14 @@ class PlayerController {
         {
           where: { club_id: user_request.club_id },
           model: ClubPlayer,
-          attributes: ['id', 'position', 'type', 'user_id', 'invite'],
+          attributes: [
+            'id',
+            'position',
+            'user_id',
+            'invite',
+            'created_at',
+            'monthly_payment',
+          ],
         },
       ],
     });
@@ -89,10 +96,13 @@ class PlayerController {
         .max(11, 'Telefone precisa ter entre 10 e 11 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
-        .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
-      type: Yup.string()
-        .required('Tipo é obrigatório')
-        .oneOf(['JOGADOR', 'COLABORADOR'], 'Tipo é inválido'),
+        .oneOf(
+          ['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'],
+          'Posição é inválida'
+        ),
+      monthly_payment: Yup.number().required(
+        'Valor da Mensalidade é obrigatório'
+      ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -104,12 +114,12 @@ class PlayerController {
     }
 
     // SET CLUB PLAYER DATA
-    const { type, position, status } = body_request;
+    const { status, position, monthly_payment } = body_request;
     const clubPlayerData = {
-      type,
       status,
       club_id,
       position,
+      monthly_payment,
     };
 
     // FIND AN USER BY PHONE
@@ -164,13 +174,16 @@ class PlayerController {
         .max(11, 'Telefone precisa ter entre 10 e 11 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
-        .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'], 'Posição é inválida'),
-      type: Yup.string()
-        .required('Tipo é obrigatório')
-        .oneOf(['JOGADOR', 'COLABORADOR'], 'Tipo é inválido'),
+        .oneOf(
+          ['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'],
+          'Posição é inválida'
+        ),
       invite: Yup.string()
         .required('Status é obrigatório')
         .oneOf(['AGUARDANDO', 'ACEITO', 'BLOQUEADO'], 'Status é inválido'),
+      monthly_payment: Yup.number().required(
+        'Valor da Mensalidade é obrigatório'
+      ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -218,10 +231,17 @@ class PlayerController {
       }
     }
 
-    const { name, phone, birth_date, position, type, invite } = body_request;
+    const {
+      name,
+      phone,
+      birth_date,
+      position,
+      invite,
+      monthly_payment,
+    } = body_request;
 
     await findUser.update({ name, phone, birth_date });
-    await findClubPlayer.update({ position, type, invite });
+    await findClubPlayer.update({ position, invite, monthly_payment });
 
     return res.json({ message: 'Registro Atualizado com sucesso!' });
   }

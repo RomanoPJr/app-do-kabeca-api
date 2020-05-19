@@ -6,9 +6,15 @@ class ClubPlayer extends Model {
       {
         club_id: Sequelize.INTEGER,
         user_id: Sequelize.INTEGER,
-        type: Sequelize.ENUM('JOGADOR', 'COLABORADOR'),
-        position: Sequelize.ENUM('GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE'),
         invite: Sequelize.ENUM('ACEITO', 'AGUARDANDO', 'NEGADO', 'BLOQUEADO'),
+        monthly_payment: Sequelize.FLOAT,
+        position: Sequelize.ENUM(
+          'GOLEIRO',
+          'DEFESA',
+          'MEIO',
+          'ATAQUE',
+          'COLABORADOR'
+        ),
       },
       {
         sequelize,
@@ -20,6 +26,9 @@ class ClubPlayer extends Model {
 
   static associate(models) {
     this.belongsTo(models.User, { foreignKey: 'user_id' });
+    this.hasMany(models.MonthlyPayment, {
+      foreignKey: 'club_player_id',
+    });
   }
 }
 
