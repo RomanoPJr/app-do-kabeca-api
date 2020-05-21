@@ -20,7 +20,6 @@ class Club extends Model {
         city: Sequelize.STRING,
         state: Sequelize.STRING,
         logo_url: Sequelize.TEXT,
-        monthly_payment: Sequelize.FLOAT,
       },
       {
         sequelize,
