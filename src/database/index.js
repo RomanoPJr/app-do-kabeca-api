@@ -4,7 +4,6 @@ import Club from '../app/models/Club';
 import User from '../app/models/User';
 import Event from '../app/models/Event';
 import Sponsor from '../app/models/Sponsor';
-import Payment from '../app/models/Payment';
 import Statute from '../app/models/Statute';
 import databaseConfig from '../config/database';
 import ClubPlayer from '../app/models/ClubPlayer';
@@ -17,10 +16,9 @@ const models = [
   Club,
   Event,
   Sponsor,
-  Payment,
-  MonthlyPayment,
   Statute,
   ClubPlayer,
+  MonthlyPayment,
   SuggestionEvent,
   SuggestionStatute,
 ];

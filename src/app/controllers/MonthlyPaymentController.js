@@ -1,37 +1,84 @@
 import * as Yup from 'yup';
 
+import { Op } from 'sequelize';
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
 
 class MonthlyPaymentController {
   async index(req, res) {
-    const { pageSize = 10, pageNumber = 1 } = req.query;
+    const {
+      year = new Date().getFullYear(),
+      month = new Date().getMonth() + 1,
+      pageSize = 10,
+      pageNumber = 1,
+    } = req.query;
     const { user_request } = req.body;
 
-    const dataCount = await MonthlyPayment.count({
-      where: { club_id: user_request.club_id },
-    });
-
-    const dataFindAll = await MonthlyPayment.findAll({
-      where: { club_id: user_request.club_id },
-      offset: (pageNumber - 1) * pageSize,
+    const { count, rows } = await ClubPlayer.findAndCountAll({
       limit: pageSize,
-      attributes: ['id', 'value', 'referent', 'user_id'],
-      order: [['id', 'asc']],
+      offset: (pageNumber - 1) * pageSize,
+      attributes: [
+        'id',
+        'position',
+        'user_id',
+        'invite',
+        'monthly_payment',
+        'created_at',
+      ],
+      where: {
+        club_id: user_request.club_id,
+        created_at: {
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
+      },
       include: [
         {
+          model: MonthlyPayment,
+          where: {
+            referent: {
+              [Op.gte]: new Date(`${year}-${month}-01`),
+              [Op.lte]: new Date(`${year}-${month}-31`),
+            },
+          },
+          required: false,
+        },
+        {
           model: User,
-          attributes: ['name', 'type', 'phone'],
         },
       ],
     });
 
+    let totalReceivable = 0;
+    rows.map(({ dataValues: { monthly_payment, MonthlyPayments } }) => {
+      if (MonthlyPayments.length > 0) {
+        totalReceivable += MonthlyPayments[0].due_value;
+      } else {
+        totalReceivable += monthly_payment;
+      }
+    });
+
+    const totalReceived = rows.reduce(
+      (a, b) =>
+        a +
+        (b.MonthlyPayments.length > 0 && b.MonthlyPayments[0].paid_value
+          ? b.MonthlyPayments[0].paid_value
+          : 0),
+      0
+    );
+
+    const totalDue = totalReceivable - totalReceived;
+
     return res.json({
       pageSize,
       pageNumber,
-      pageTotal: Math.ceil(dataCount / pageSize),
-      data: dataFindAll,
+      pageTotal: Math.ceil(count / pageSize),
+      data: rows,
+      totalizers: {
+        totalReceivable,
+        totalReceived,
+        totalDue,
+      },
     });
   }
 
@@ -41,9 +88,10 @@ class MonthlyPaymentController {
 
     const schema = Yup.object().shape({
       club_player_id: Yup.string().required('Nenhum jogador foi informado'),
-      value: Yup.number().required('Valor é obrigatório'),
-      referent: Yup.date('Referência é inválida').required(
-        'Referente à é obrigatório'
+      due_value: Yup.number().required('Valor a pagar'),
+      paid_value: Yup.number().required('Valor pago'),
+      referent: Yup.date('Data de Referência é inválida').required(
+        'Data de Referência é obrigatória'
       ),
     });
 
@@ -71,12 +119,12 @@ class MonthlyPaymentController {
   }
 
   async update(req, res) {
-    const { user_request, ...body_request } = req.body;
-    const { club_id } = user_request;
+    const { ...body_request } = req.body;
 
     const schema = Yup.object().shape({
       club_player_id: Yup.string().required('Nenhum Jogador Informado'),
-      value: Yup.number().required('Valor é obrigatório'),
+      due_value: Yup.number().required('Valor a pagar'),
+      paid_value: Yup.number().required('Valor pago'),
       referent: Yup.date('Referência é inválida').required(
         'Referente é obrigatório'
       ),

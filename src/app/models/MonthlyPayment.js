@@ -5,7 +5,8 @@ class MonthlyPayment extends Model {
     super.init(
       {
         club_player_id: Sequelize.INTEGER,
-        value: Sequelize.INTEGER,
+        due_value: Sequelize.INTEGER,
+        paid_value: Sequelize.INTEGER,
         referent: Sequelize.DATEONLY,
       },
       {
