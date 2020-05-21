@@ -47,9 +47,6 @@ class ClubController {
       city: Yup.string().required('Cidade da pelada é obrigatório'),
       state: Yup.string().required('Estado da pelada é obrigatório'),
       logo_url: Yup.string(),
-      payment_module_view_type: Yup.string()
-        .required('Tipo de Visualização do módulo de pagamentos é obrigatório')
-        .oneOf(['ALL', 'INDIVIDUAL'], 'Tipo de Visualização é inválido'),
       day: Yup.string()
         .required('Email é obrigatório')
         .oneOf(
@@ -85,6 +82,7 @@ class ClubController {
     }
 
     body_request.user_id = user_request.id;
+    body_request.payment_module_view_type = 'ALL';
 
     const {
       id,

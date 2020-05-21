@@ -76,7 +76,6 @@ routes.get('/player', authOrganizer, PlayerController.index);
 routes.post('/player', authOrganizer, PlayerController.store);
 routes.put('/player', authOrganizer, PlayerController.update);
 routes.delete('/player/:id', authOrganizer, PlayerController.delete);
-// routes.get('/player/payment', authOrganizer, PlayerController.player_payment);
 routes.put(
   '/player/:id/reset_password',
   authOrganizer,
