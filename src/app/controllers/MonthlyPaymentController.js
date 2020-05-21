@@ -156,8 +156,8 @@ class MonthlyPaymentController {
 
     const schema = Yup.object().shape({
       club_player_id: Yup.string().required('Nenhum Jogador Informado'),
-      due_value: Yup.number().required('Valor a pagar'),
-      paid_value: Yup.number().required('Valor pago'),
+      due_value: Yup.number().required('Valor a pagar é obrigatório'),
+      paid_value: Yup.number().required('Valor pago é obrigatório'),
       referent: Yup.date('Referência é inválida').required(
         'Referente é obrigatório'
       ),
@@ -184,9 +184,10 @@ class MonthlyPaymentController {
       });
     }
 
-    const { value, referent } = body_request;
+    const { due_value, paid_value, referent } = body_request;
     await findPayment.update({
-      value,
+      due_value,
+      paid_value,
       referent,
     });
 
