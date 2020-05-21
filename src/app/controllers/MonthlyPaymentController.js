@@ -5,15 +5,67 @@ import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
 
+const getTotalizers = async ({ club_id, year, month }) => {
+  const response = await ClubPlayer.findAll({
+    attributes: ['monthly_payment'],
+    where: {
+      club_id,
+      created_at: {
+        [Op.lte]: new Date(`${year}-${month}-31`),
+      },
+    },
+    include: [
+      {
+        model: MonthlyPayment,
+        attributes: ['due_value', 'paid_value'],
+        where: {
+          referent: {
+            [Op.gte]: new Date(`${year}-${month}-01`),
+            [Op.lte]: new Date(`${year}-${month}-31`),
+          },
+        },
+        required: false,
+      },
+      {
+        model: User,
+      },
+    ],
+  });
+
+  let totalReceivable = 0;
+  response.map(({ dataValues: { monthly_payment, MonthlyPayments } }) => {
+    if (MonthlyPayments.length > 0) {
+      totalReceivable += MonthlyPayments[0].due_value;
+    } else {
+      totalReceivable += monthly_payment;
+    }
+  });
+
+  const totalReceived = response.reduce(
+    (a, b) =>
+      a +
+      (b.MonthlyPayments.length > 0 && b.MonthlyPayments[0].paid_value
+        ? b.MonthlyPayments[0].paid_value
+        : 0),
+    0
+  );
+  const totalDue = totalReceivable - totalReceived;
+
+  return {
+    totalReceivable,
+    totalReceived,
+    totalDue,
+  };
+};
 class MonthlyPaymentController {
   async index(req, res) {
+    const { user_request } = req.body;
     const {
-      year = new Date().getFullYear(),
-      month = new Date().getMonth() + 1,
       pageSize = 10,
       pageNumber = 1,
+      year = new Date().getFullYear(),
+      month = new Date().getMonth() + 1,
     } = req.query;
-    const { user_request } = req.body;
 
     const { count, rows } = await ClubPlayer.findAndCountAll({
       limit: pageSize,
@@ -49,36 +101,17 @@ class MonthlyPaymentController {
       ],
     });
 
-    let totalReceivable = 0;
-    rows.map(({ dataValues: { monthly_payment, MonthlyPayments } }) => {
-      if (MonthlyPayments.length > 0) {
-        totalReceivable += MonthlyPayments[0].due_value;
-      } else {
-        totalReceivable += monthly_payment;
-      }
+    const totalizers = await getTotalizers({
+      club_id: user_request.club_id,
+      year,
+      month,
     });
-
-    const totalReceived = rows.reduce(
-      (a, b) =>
-        a +
-        (b.MonthlyPayments.length > 0 && b.MonthlyPayments[0].paid_value
-          ? b.MonthlyPayments[0].paid_value
-          : 0),
-      0
-    );
-
-    const totalDue = totalReceivable - totalReceived;
-
     return res.json({
       pageSize,
       pageNumber,
       pageTotal: Math.ceil(count / pageSize),
       data: rows,
-      totalizers: {
-        totalReceivable,
-        totalReceived,
-        totalDue,
-      },
+      totalizers,
     });
   }
 
