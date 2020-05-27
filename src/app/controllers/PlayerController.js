@@ -100,9 +100,11 @@ class PlayerController {
           ['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'],
           'Posição é inválida'
         ),
-      monthly_payment: Yup.number().required(
-        'Valor da Mensalidade é obrigatório'
-      ),
+      monthly_payment: Yup.number().when('position', (position, field) => {
+        return position !== 'COLABORADOR'
+          ? field.required('Valor da Mensalidade é obrigatório')
+          : field;
+      }),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -168,10 +170,6 @@ class PlayerController {
       name: Yup.string()
         .required('Nome é obrigatório')
         .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
-      phone: Yup.string()
-        .required('Telefone é obrigatório')
-        .min(10, 'Telefone precisa ter entre 10 e 11 caracteres')
-        .max(11, 'Telefone precisa ter entre 10 e 11 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
         .oneOf(
@@ -212,35 +210,15 @@ class PlayerController {
       });
     }
 
-    if (body_request.phone !== findUser.phone) {
-      if (findUser.type === 'ORGANIZER') {
-        return res.status(400).json({
-          error:
-            'Este jogador tambem é um organizador, somente ele pode alterar suas informações de contato',
-        });
-      }
-
-      const dataFindOneUser = await User.findOne({
-        where: { phone: body_request.phone },
-      });
-
-      if (dataFindOneUser) {
-        return res.status(400).json({
-          error: 'Já existe um usuário com este email ou telefone',
-        });
-      }
-    }
-
     const {
       name,
-      phone,
-      birth_date,
-      position,
       invite,
+      position,
+      birth_date,
       monthly_payment,
     } = body_request;
 
-    await findUser.update({ name, phone, birth_date });
+    await findUser.update({ name, birth_date });
     await findClubPlayer.update({ position, invite, monthly_payment });
 
     return res.json({ message: 'Registro Atualizado com sucesso!' });

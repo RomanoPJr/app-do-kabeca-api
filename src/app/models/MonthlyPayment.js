@@ -4,7 +4,9 @@ class MonthlyPayment extends Model {
   static init(sequelize) {
     super.init(
       {
-        club_player_id: Sequelize.INTEGER,
+        club_id: Sequelize.INTEGER,
+        name: Sequelize.STRING,
+        phone: Sequelize.STRING,
         due_value: Sequelize.INTEGER,
         paid_value: Sequelize.INTEGER,
         referent: Sequelize.DATEONLY,
@@ -17,9 +19,9 @@ class MonthlyPayment extends Model {
     return this;
   }
 
-  static associate(models) {
-    this.belongsTo(models.ClubPlayer);
-  }
+  // static associate(models) {
+  //   this.belongsTo(models.Club);
+  // }
 }
 
 export default MonthlyPayment;

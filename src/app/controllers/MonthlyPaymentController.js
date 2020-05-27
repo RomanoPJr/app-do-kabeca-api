@@ -58,6 +58,92 @@ const getTotalizers = async ({ club_id, year, month }) => {
   };
 };
 class MonthlyPaymentController {
+  async listPaid(req, res) {
+    const { user_request } = req.body;
+    const {
+      pageSize = 10,
+      pageNumber = 1,
+      year = new Date().getFullYear(),
+      month = new Date().getMonth() + 1,
+    } = req.query;
+
+    const { count, rows } = await MonthlyPayment.findAndCountAll({
+      limit: pageSize,
+      offset: (pageNumber - 1) * pageSize,
+      where: {
+        club_id: user_request.club_id,
+        referent: {
+          [Op.gte]: new Date(`${year}-${month}-01`),
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
+      },
+    });
+
+    return res.json({
+      pageSize,
+      pageNumber,
+      pageTotal: Math.ceil(count / pageSize),
+      data: rows,
+    });
+  }
+
+  async listDebit(req, res) {
+    const { user_request } = req.body;
+    const {
+      pageSize = 10,
+      pageNumber = 1,
+      year = new Date().getFullYear(),
+      month = new Date().getMonth() + 1,
+    } = req.query;
+
+    // GET ALL PAYMENT NUMBERS OF THIS CLUB
+    const payments = await MonthlyPayment.findAll({
+      limit: pageSize,
+      offset: (pageNumber - 1) * pageSize,
+      where: {
+        club_id: user_request.club_id,
+        referent: {
+          [Op.gte]: new Date(`${year}-${month}-01`),
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
+      },
+    });
+
+    const phones = payments.map(payment => payment.phone);
+
+    const { count, rows } = await ClubPlayer.findAndCountAll({
+      limit: pageSize,
+      offset: (pageNumber - 1) * pageSize,
+      raw: true,
+      nest: true,
+      attributes: ['user_id', 'created_at'],
+      where: {
+        club_id: user_request.club_id,
+        created_at: {
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
+      },
+      include: [
+        {
+          model: User,
+          attributes: ['name', 'phone'],
+          where: {
+            phone: {
+              [Op.notIn]: phones,
+            },
+          },
+        },
+      ],
+    });
+
+    return res.json({
+      pageSize,
+      pageNumber,
+      pageTotal: Math.ceil(count / pageSize),
+      data: rows,
+    });
+  }
+
   async index(req, res) {
     const { user_request } = req.body;
     const {
@@ -117,15 +203,15 @@ class MonthlyPaymentController {
 
   async store(req, res) {
     const { user_request, ...body_request } = req.body;
-    const { club_id } = user_request;
+    const {
+      year = new Date().getFullYear(),
+      month = new Date().getMonth() + 1,
+    } = req.query;
 
     const schema = Yup.object().shape({
-      club_player_id: Yup.string().required('Nenhum jogador foi informado'),
-      due_value: Yup.number().required('Valor a pagar'),
-      paid_value: Yup.number().required('Valor pago'),
-      referent: Yup.date('Data de Referência é inválida').required(
-        'Data de Referência é obrigatória'
-      ),
+      club_player_id: Yup.number().required('Nenhum jogador foi informado'),
+      due_value: Yup.number().required('Valor a pagar é obrigatório'),
+      paid_value: Yup.number().required('Valor pago é obrigatório'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -136,9 +222,16 @@ class MonthlyPaymentController {
       return res.status(400).json({ error: validate.error });
     }
 
-    const findClubPlayer = await ClubPlayer.findOne({
-      club_id,
-      club_player_id: body_request.club_player_id,
+    const { club_player_id } = body_request;
+    const findClubPlayer = await ClubPlayer.findByPk(club_player_id, {
+      attributes: ['id', 'user_id'],
+      raw: true,
+      nest: true,
+      include: [
+        {
+          model: User,
+        },
+      ],
     });
 
     if (!findClubPlayer) {
@@ -147,20 +240,29 @@ class MonthlyPaymentController {
       });
     }
 
-    await MonthlyPayment.create(body_request);
-    return res.json({ message: 'Success' });
+    const payment = await MonthlyPayment.create({
+      due_value: body_request.due_value,
+      paid_value: body_request.paid_value,
+      referent: `${year}-${month}-01`,
+      club_id: user_request.club_id,
+      name: findClubPlayer.User.name,
+      phone: findClubPlayer.User.phone,
+    });
+
+    return res.json(payment);
   }
 
   async update(req, res) {
-    const { ...body_request } = req.body;
+    const body_request = req.body;
+    const {
+      year = new Date().getFullYear(),
+      month = new Date().getMonth() + 1,
+    } = req.query;
 
     const schema = Yup.object().shape({
-      club_player_id: Yup.string().required('Nenhum Jogador Informado'),
+      id: Yup.number().required('Nenhum Pagamento Informado'),
       due_value: Yup.number().required('Valor a pagar é obrigatório'),
       paid_value: Yup.number().required('Valor pago é obrigatório'),
-      referent: Yup.date('Referência é inválida').required(
-        'Referente é obrigatório'
-      ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -171,12 +273,8 @@ class MonthlyPaymentController {
       return res.status(400).json({ error: validate.error });
     }
 
-    const findPayment = await MonthlyPayment.findOne({
-      where: {
-        id: body_request.id,
-        club_player_id: body_request.club_player_id,
-      },
-    });
+    const { id } = body_request;
+    const findPayment = await MonthlyPayment.findByPk(id);
 
     if (!findPayment) {
       return res.status(400).json({
@@ -184,14 +282,14 @@ class MonthlyPaymentController {
       });
     }
 
-    const { due_value, paid_value, referent } = body_request;
-    await findPayment.update({
+    const { due_value, paid_value } = body_request;
+    const updatedPayment = await findPayment.update({
       due_value,
       paid_value,
-      referent,
+      referent: `${year}-${month}-01`,
     });
 
-    return res.json({ message: 'Registro Atualizado com sucesso!' });
+    return res.json(updatedPayment);
   }
 
   async delete(req, res) {

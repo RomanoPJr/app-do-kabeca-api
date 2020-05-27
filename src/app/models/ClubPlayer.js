@@ -26,9 +26,6 @@ class ClubPlayer extends Model {
 
   static associate(models) {
     this.belongsTo(models.User, { foreignKey: 'user_id' });
-    this.hasMany(models.MonthlyPayment, {
-      foreignKey: 'club_player_id',
-    });
   }
 }
 

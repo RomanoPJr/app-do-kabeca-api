@@ -96,6 +96,8 @@ routes.get('/user', authOrganizer, UserController.index);
 routes.get('/user/find', authOrganizer, UserController.findOne);
 
 routes.get('/payment', authOrganizer, MonthlyPaymentController.index);
+routes.get('/payment/paid', authOrganizer, MonthlyPaymentController.listPaid);
+routes.get('/payment/debit', authOrganizer, MonthlyPaymentController.listDebit);
 routes.post('/payment', authOrganizer, MonthlyPaymentController.store);
 routes.put('/payment', authOrganizer, MonthlyPaymentController.update);
 routes.delete('/payment/:id', authOrganizer, MonthlyPaymentController.delete);
