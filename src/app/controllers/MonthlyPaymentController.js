@@ -5,56 +5,90 @@ import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
 
-const getTotalizers = async ({ club_id, year, month }) => {
-  const response = await ClubPlayer.findAll({
-    attributes: ['monthly_payment'],
+const getPaid = async ({ user_request, pageSize, pageNumber, year, month }) => {
+  const response = await MonthlyPayment.findAndCountAll({
+    limit: pageSize,
+    order: [['name', 'asc']],
+    offset: (pageNumber - 1) * pageSize,
     where: {
-      club_id,
+      club_id: user_request.club_id,
+      referent: {
+        [Op.gte]: new Date(`${year}-${month}-01`),
+        [Op.lte]: new Date(`${year}-${month}-31`),
+      },
+    },
+  });
+  return response;
+};
+
+const getRegisters = async ({
+  year,
+  month,
+  pageSize,
+  pageNumber,
+  user_request,
+}) => {
+  // GET ALL PAYMENT NUMBERS OF THIS CLUB
+  const paid = await getPaid({
+    user_request,
+    pageSize,
+    pageNumber,
+    year,
+    month,
+  });
+
+  const phones = paid.rows.map(payment => payment.phone);
+
+  const debit = await ClubPlayer.findAndCountAll({
+    limit: pageSize,
+    offset: (pageNumber - 1) * pageSize,
+    raw: true,
+    nest: true,
+    attributes: ['id', 'user_id', 'monthly_payment', 'created_at', 'position'],
+    where: {
+      club_id: user_request.club_id,
       created_at: {
         [Op.lte]: new Date(`${year}-${month}-31`),
       },
     },
     include: [
       {
-        model: MonthlyPayment,
-        attributes: ['due_value', 'paid_value'],
+        model: User,
+        attributes: ['name', 'phone'],
         where: {
-          referent: {
-            [Op.gte]: new Date(`${year}-${month}-01`),
-            [Op.lte]: new Date(`${year}-${month}-31`),
+          phone: {
+            [Op.notIn]: phones,
           },
         },
-        required: false,
-      },
-      {
-        model: User,
       },
     ],
   });
 
-  let totalReceivable = 0;
-  response.map(({ dataValues: { monthly_payment, MonthlyPayments } }) => {
-    if (MonthlyPayments.length > 0) {
-      totalReceivable += MonthlyPayments[0].due_value;
-    } else {
-      totalReceivable += monthly_payment;
-    }
-  });
+  const totalizers = await getTotalizers({ paid, debit });
 
-  const totalReceived = response.reduce(
-    (a, b) =>
-      a +
-      (b.MonthlyPayments.length > 0 && b.MonthlyPayments[0].paid_value
-        ? b.MonthlyPayments[0].paid_value
-        : 0),
+  return { paid, debit, totalizers };
+};
+
+const getTotalizers = async ({ paid, debit }) => {
+  const paidTotal = paid.rows.reduce(
+    (accumulator, payment) => ({
+      due_total: accumulator.due_total + payment.due_value,
+      paid_total: accumulator.paid_total + payment.paid_value,
+    }),
+    {
+      due_total: 0,
+      paid_total: 0,
+    }
+  );
+
+  const debitTotal = debit.rows.reduce(
+    (accumulator, debitCurrent) => accumulator + debitCurrent.monthly_payment,
     0
   );
-  const totalDue = totalReceivable - totalReceived;
-
   return {
-    totalReceivable,
-    totalReceived,
-    totalDue,
+    totalReceivable: paidTotal.due_total + debitTotal,
+    totalReceived: paidTotal.paid_total,
+    totalDue: debitTotal,
   };
 };
 class MonthlyPaymentController {
@@ -67,23 +101,20 @@ class MonthlyPaymentController {
       month = new Date().getMonth() + 1,
     } = req.query;
 
-    const { count, rows } = await MonthlyPayment.findAndCountAll({
-      limit: pageSize,
-      offset: (pageNumber - 1) * pageSize,
-      where: {
-        club_id: user_request.club_id,
-        referent: {
-          [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lte]: new Date(`${year}-${month}-31`),
-        },
-      },
+    const { paid, totalizers } = await getRegisters({
+      pageSize,
+      pageNumber,
+      user_request,
+      year,
+      month,
     });
 
     return res.json({
       pageSize,
       pageNumber,
-      pageTotal: Math.ceil(count / pageSize),
-      data: rows,
+      pageTotal: Math.ceil(paid.count / pageSize),
+      totalizers,
+      data: paid.rows,
     });
   }
 
@@ -96,51 +127,20 @@ class MonthlyPaymentController {
       month = new Date().getMonth() + 1,
     } = req.query;
 
-    // GET ALL PAYMENT NUMBERS OF THIS CLUB
-    const payments = await MonthlyPayment.findAll({
-      limit: pageSize,
-      offset: (pageNumber - 1) * pageSize,
-      where: {
-        club_id: user_request.club_id,
-        referent: {
-          [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lte]: new Date(`${year}-${month}-31`),
-        },
-      },
-    });
-
-    const phones = payments.map(payment => payment.phone);
-
-    const { count, rows } = await ClubPlayer.findAndCountAll({
-      limit: pageSize,
-      offset: (pageNumber - 1) * pageSize,
-      raw: true,
-      nest: true,
-      attributes: ['user_id', 'created_at'],
-      where: {
-        club_id: user_request.club_id,
-        created_at: {
-          [Op.lte]: new Date(`${year}-${month}-31`),
-        },
-      },
-      include: [
-        {
-          model: User,
-          attributes: ['name', 'phone'],
-          where: {
-            phone: {
-              [Op.notIn]: phones,
-            },
-          },
-        },
-      ],
+    const { debit, totalizers } = await getRegisters({
+      pageSize,
+      pageNumber,
+      user_request,
+      year,
+      month,
     });
 
     return res.json({
       pageSize,
       pageNumber,
-      pageTotal: Math.ceil(count / pageSize),
-      data: rows,
+      pageTotal: Math.ceil(debit.count / pageSize),
+      totalizers,
+      data: debit.rows,
     });
   }
 
