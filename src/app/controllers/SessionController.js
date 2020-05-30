@@ -44,7 +44,14 @@ class SessionController {
 
     const user = await User.findOne({
       where: { email: body.email },
-      attributes: ['id', 'name', 'password_hash', 'type', 'createdAt'],
+      attributes: [
+        'id',
+        'name',
+        'status',
+        'password_hash',
+        'type',
+        'createdAt',
+      ],
     });
 
     if (!user) {
@@ -55,14 +62,14 @@ class SessionController {
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
 
-    if (user.type === 'ORGANIZER') {
+    if (user.type === 'ORGANIZER' && user.status === 'TESTE') {
       const date1 = new Date(user.createdAt);
       const date2 = new Date(Date.now());
       const diffDays = parseInt((date2 - date1) / (1000 * 60 * 60 * 24), 10);
 
       if (diffDays > 30) {
         return res.status(401).json({
-          error: 'O seu período de validação chegou ao fim.',
+          error: 'O seu período de 30 dias de avaliação chegou ao fim.',
         });
       }
     }

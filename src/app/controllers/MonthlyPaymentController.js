@@ -21,6 +21,29 @@ const getPaid = async ({ user_request, pageSize, pageNumber, year, month }) => {
   return response;
 };
 
+const getTotalizers = async ({ paid, debit }) => {
+  const paidTotal = paid.rows.reduce(
+    (accumulator, payment) => ({
+      due_total: accumulator.due_total + payment.due_value,
+      paid_total: accumulator.paid_total + payment.paid_value,
+    }),
+    {
+      due_total: 0,
+      paid_total: 0,
+    }
+  );
+
+  const debitTotal = debit.rows.reduce(
+    (accumulator, debitCurrent) => accumulator + debitCurrent.monthly_payment,
+    0
+  );
+  return {
+    totalReceivable: paidTotal.due_total + debitTotal,
+    totalReceived: paidTotal.paid_total,
+    totalDue: debitTotal,
+  };
+};
+
 const getRegisters = async ({
   year,
   month,
@@ -69,28 +92,6 @@ const getRegisters = async ({
   return { paid, debit, totalizers };
 };
 
-const getTotalizers = async ({ paid, debit }) => {
-  const paidTotal = paid.rows.reduce(
-    (accumulator, payment) => ({
-      due_total: accumulator.due_total + payment.due_value,
-      paid_total: accumulator.paid_total + payment.paid_value,
-    }),
-    {
-      due_total: 0,
-      paid_total: 0,
-    }
-  );
-
-  const debitTotal = debit.rows.reduce(
-    (accumulator, debitCurrent) => accumulator + debitCurrent.monthly_payment,
-    0
-  );
-  return {
-    totalReceivable: paidTotal.due_total + debitTotal,
-    totalReceived: paidTotal.paid_total,
-    totalDue: debitTotal,
-  };
-};
 class MonthlyPaymentController {
   async listPaid(req, res) {
     const { user_request } = req.body;

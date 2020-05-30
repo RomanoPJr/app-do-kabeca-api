@@ -11,14 +11,16 @@ export default async (req, res, next) => {
     });
   }
 
-  const date1 = new Date(user_request.createdAt);
-  const date2 = new Date(Date.now());
-  const diffDays = parseInt((date2 - date1) / (1000 * 60 * 60 * 24), 10);
+  if (user_request.type === 'ORGANIZER' && user_request.status === 'TESTE') {
+    const date1 = new Date(user_request.createdAt);
+    const date2 = new Date(Date.now());
+    const diffDays = parseInt((date2 - date1) / (1000 * 60 * 60 * 24), 10);
 
-  if (diffDays > 30) {
-    return res.status(401).json({
-      error: 'O seu período de validação chegou ao fim.',
-    });
+    if (diffDays > 30) {
+      return res.status(401).json({
+        error: 'O seu período de 30 dias de avaliação chegou ao fim.',
+      });
+    }
   }
 
   const {
