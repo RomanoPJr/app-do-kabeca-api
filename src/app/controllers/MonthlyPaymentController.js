@@ -33,14 +33,22 @@ const getTotalizers = async ({ paid, debit }) => {
     }
   );
 
-  const debitTotal = debit.rows.reduce(
-    (accumulator, debitCurrent) => accumulator + debitCurrent.monthly_payment,
-    0
-  );
+  const debitTotal = debit.rows.reduce((accumulator, debitCurrent) => {
+    const value =
+      debitCurrent.position === 'COLABORADOR'
+        ? 0
+        : debitCurrent.monthly_payment;
+    return accumulator + value;
+  }, 0);
+
+  const totalReceivable = paidTotal.due_total + debitTotal;
+  const totalReceived = paidTotal.paid_total;
+  const totalDue = totalReceivable - paidTotal.paid_total;
+
   return {
-    totalReceivable: paidTotal.due_total + debitTotal,
-    totalReceived: paidTotal.paid_total,
-    totalDue: debitTotal,
+    totalReceivable,
+    totalReceived,
+    totalDue,
   };
 };
 
@@ -225,7 +233,7 @@ class MonthlyPaymentController {
 
     const { club_player_id } = body_request;
     const findClubPlayer = await ClubPlayer.findByPk(club_player_id, {
-      attributes: ['id', 'user_id'],
+      attributes: ['id', 'user_id', 'position'],
       raw: true,
       nest: true,
       include: [
@@ -241,6 +249,10 @@ class MonthlyPaymentController {
       });
     }
 
+    console.log('------------------------');
+    console.log(findClubPlayer);
+    console.log('------------------------');
+
     const payment = await MonthlyPayment.create({
       due_value: body_request.due_value,
       paid_value: body_request.paid_value,
@@ -248,6 +260,7 @@ class MonthlyPaymentController {
       club_id: user_request.club_id,
       name: findClubPlayer.User.name,
       phone: findClubPlayer.User.phone,
+      position: findClubPlayer.position,
     });
 
     return res.json(payment);

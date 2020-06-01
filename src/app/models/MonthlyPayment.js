@@ -10,6 +10,13 @@ class MonthlyPayment extends Model {
         due_value: Sequelize.INTEGER,
         paid_value: Sequelize.INTEGER,
         referent: Sequelize.DATEONLY,
+        position: Sequelize.ENUM(
+          'GOLEIRO',
+          'DEFESA',
+          'MEIO',
+          'ATAQUE',
+          'COLABORADOR'
+        ),
       },
       {
         sequelize,
