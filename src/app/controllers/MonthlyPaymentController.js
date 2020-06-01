@@ -35,9 +35,9 @@ const getTotalizers = async ({ paid, debit }) => {
 
   const debitTotal = debit.rows.reduce((accumulator, debitCurrent) => {
     const value =
-      debitCurrent.position === 'COLABORADOR'
+      debitCurrent.ClubPlayers.position === 'COLABORADOR'
         ? 0
-        : debitCurrent.monthly_payment;
+        : debitCurrent.ClubPlayers.monthly_payment;
     return accumulator + value;
   }, 0);
 
@@ -70,25 +70,31 @@ const getRegisters = async ({
 
   const phones = paid.rows.map(payment => payment.phone);
 
-  const debit = await ClubPlayer.findAndCountAll({
+  const debit = await User.findAndCountAll({
     limit: pageSize,
     offset: (pageNumber - 1) * pageSize,
     raw: true,
     nest: true,
-    attributes: ['id', 'user_id', 'monthly_payment', 'created_at', 'position'],
+    attributes: ['id', 'name', 'phone'],
+    order: [['name', 'asc']],
     where: {
-      club_id: user_request.club_id,
-      created_at: {
-        [Op.lte]: new Date(`${year}-${month}-31`),
+      phone: {
+        [Op.notIn]: phones,
       },
     },
     include: [
       {
-        model: User,
-        attributes: ['name', 'phone'],
+        model: ClubPlayer,
+        attributes: [
+          'id',
+          'user_id',
+          'monthly_payment',
+          'created_at',
+          'position',
+        ],
         where: {
-          phone: {
-            [Op.notIn]: phones,
+          club_id: {
+            [Op.eq]: user_request.club_id,
           },
         },
       },
