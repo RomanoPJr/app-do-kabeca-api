@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import differenceInMonths from 'date-fns/differenceInMonths';
 import Sponsor from '../models/Sponsor';
 import Club from '../models/Club';
 
@@ -7,34 +8,30 @@ class SponsorController {
     const { pageSize = 10, pageNumber = 1 } = req.query;
     const { user_request } = req.body;
 
-    const dataFindOneClub = await Club.findOne({
-      where: { user_id: user_request.id },
-      attributes: ['id'],
-    });
-
-    if (!dataFindOneClub) {
+    if (!user_request.club_id) {
       return res.status(404).json({
         error: 'Você ainda não configurou o seu clube',
       });
     }
 
-    const dataCount = await Sponsor.count({
-      where: { club_id: dataFindOneClub.id },
-    });
-
-    const dataFindAll = await Sponsor.findAll({
-      where: { club_id: dataFindOneClub.id },
+    const { count, rows } = await Sponsor.findAndCountAll({
+      where: { club_id: user_request.club_id },
       offset: (pageNumber - 1) * pageSize,
+      raw: true,
+      nest: true,
       limit: pageSize,
-      attributes: ['id', 'name', 'value', 'status', 'banner_url'],
+      attributes: ['id', 'name', 'value', 'status', 'banner_url', 'created_at'],
       order: [['id', 'asc']],
     });
 
+    rows.map(row => {
+      row.sponsorship_time = differenceInMonths(Date.now(), row.created_at);
+    });
     return res.json({
       pageSize,
       pageNumber,
-      pageTotal: Math.ceil(dataCount / pageSize),
-      data: dataFindAll,
+      pageTotal: Math.ceil(count / pageSize),
+      data: rows,
     });
   }
 
