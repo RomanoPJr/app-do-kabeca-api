@@ -156,6 +156,10 @@ class PlayerController {
       clubPlayerData.user_id = id;
     }
 
+    if (clubPlayerData.position === 'COLABORADOR') {
+      clubPlayerData.monthly_payment = 0;
+    }
+
     // CREATE ASSOCIATION WITH CLUB
     await ClubPlayer.create(clubPlayerData);
     return res.json({ message: 'Convite enviado com sucesso' });
@@ -210,16 +214,16 @@ class PlayerController {
       });
     }
 
-    const {
-      name,
-      invite,
-      position,
-      birth_date,
-      monthly_payment,
-    } = body_request;
+    const { invite, position, monthly_payment } = body_request;
 
-    await findUser.update({ name, birth_date });
-    await findClubPlayer.update({ position, invite, monthly_payment });
+    const new_monthly_payment =
+      position === 'COLABORADOR' ? 0 : monthly_payment;
+
+    await findClubPlayer.update({
+      position,
+      invite,
+      monthly_payment: new_monthly_payment,
+    });
 
     return res.json({ message: 'Registro Atualizado com sucesso!' });
   }
