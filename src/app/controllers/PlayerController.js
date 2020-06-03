@@ -72,14 +72,14 @@ class PlayerController {
 
   async store(req, res) {
     const { user_request, ...body_request } = req.body;
-    const { club_id } = user_request;
+    const { club_id, plan_type } = user_request;
 
     // CHECK IF THIS CLUB HAS 60 PLAYERS
     const dataCount = await ClubPlayer.count({
       where: { club_id },
     });
 
-    if (dataCount === 60) {
+    if (dataCount === plan_type) {
       return res.status(400).json({
         error: 'Você já atingiu o limite de 60 jogadores',
       });

@@ -1,6 +1,7 @@
 import * as Yup from 'yup';
 import Sequelize from 'sequelize';
 import User from '../models/User';
+import Club from '../models/Club';
 
 class OrganizerController {
   async index(req, res) {
@@ -14,6 +15,13 @@ class OrganizerController {
       order: [['name', 'asc']],
       offset: (pageNumber - 1) * pageSize,
       attributes: ['id', 'name', 'email', 'phone', 'birth_date', 'status'],
+      include: [
+        {
+          model: Club,
+          required: false,
+          attributes: ['name', 'city', 'state', 'plan_type'],
+        },
+      ],
     });
 
     return res.json({
@@ -95,29 +103,14 @@ class OrganizerController {
 
   async update(req, res) {
     const { body } = req;
-
     const schema = Yup.object().shape({
-      name: Yup.string()
-        .required('Nome é obrigatório')
-        .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
-      phone: Yup.string()
-        .required('Telefone é obrigatório')
-        .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
-      email: Yup.string()
-        .required('Email é obrigatório')
-        .email('Email é inválido'),
-      birth_date: Yup.date('Data de Nascimento é inválido').required(
-        'Data de Nascimento é obrigatória'
-      ),
-      password: Yup.string(),
-      confirmPassword: Yup.string().when('password', (password, field) =>
-        password
-          ? field
-              .required('Campo Confirmar Senha é obrigatório')
-              .oneOf([Yup.ref('password')], 'As senhas não coincidem')
-              .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros')
-          : field
-      ),
+      id: Yup.number().required('Nenhum usuário foi informado'),
+      plan_type: Yup.string()
+        .required('Tipo de Plano é obrigatório')
+        .oneOf(['30', '60'], 'Tipo de Plan é inválido'),
+      status: Yup.string()
+        .required('Status é obrigatório')
+        .oneOf(['ATIVO', 'INATIVO', 'TESTE'], 'Status é inválido'),
     });
 
     const validate = await schema.validate(body).catch(err => {
@@ -154,9 +147,17 @@ class OrganizerController {
       }
     }
 
-    const { id, name, email, phone, type, status } = await user.update(body);
+    const { id } = await user.update(body);
 
-    return res.json({ id, name, email, phone, type, status });
+    const club = await Club.findOne({
+      where: {
+        user_id: id,
+      },
+    });
+
+    club.setDataValue('plan_type', body.plan_type);
+    await club.save();
+    return res.json({ message: 'success' });
   }
 
   async delete(req, res) {

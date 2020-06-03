@@ -255,10 +255,6 @@ class MonthlyPaymentController {
       });
     }
 
-    console.log('------------------------');
-    console.log(findClubPlayer);
-    console.log('------------------------');
-
     const payment = await MonthlyPayment.create({
       due_value: body_request.due_value,
       paid_value: body_request.paid_value,

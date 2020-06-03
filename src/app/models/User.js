@@ -33,6 +33,7 @@ class User extends Model {
   }
 
   static associate(models) {
+    this.hasOne(models.Club, { foreignKey: 'user_id' });
     this.hasMany(models.ClubPlayer, { foreignKey: 'user_id' });
   }
 }

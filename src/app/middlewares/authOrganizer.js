@@ -33,7 +33,7 @@ export default async (req, res, next) => {
 
   const dataFindOneClub = await Club.findOne({
     where: { user_id: user_request.id },
-    attributes: ['id'],
+    attributes: ['id', 'plan_type'],
   });
 
   if (!dataFindOneClub) {
@@ -43,6 +43,7 @@ export default async (req, res, next) => {
   }
 
   user_request.club_id = dataFindOneClub.id;
+  user_request.plan_type = dataFindOneClub.plan_type;
 
   return next();
 };

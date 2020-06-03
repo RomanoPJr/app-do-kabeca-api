@@ -20,6 +20,7 @@ class Club extends Model {
         city: Sequelize.STRING,
         state: Sequelize.STRING,
         logo_url: Sequelize.TEXT,
+        plan_type: Sequelize.ENUM('30', '60'),
       },
       {
         sequelize,

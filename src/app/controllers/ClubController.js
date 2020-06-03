@@ -12,28 +12,8 @@ class ClubController {
     if (!findOneData) {
       return res.status(404).json({ error: 'Nenhum clube configurado' });
     }
-    const {
-      id,
-      day,
-      name,
-      time,
-      city,
-      state,
-      user_id,
-      logo_url,
-      payment_module_view_type,
-    } = findOneData;
-    return res.json({
-      id,
-      day,
-      name,
-      time,
-      city,
-      state,
-      user_id,
-      logo_url,
-      payment_module_view_type,
-    });
+
+    return res.json(findOneData);
   }
 
   async store(req, res) {
@@ -84,30 +64,8 @@ class ClubController {
     body_request.user_id = user_request.id;
     body_request.payment_module_view_type = 'ALL';
 
-    const {
-      id,
-      day,
-      name,
-      time,
-      city,
-      state,
-      user_id,
-      logo_url,
-      createdAt,
-      payment_module_view_type,
-    } = await Club.create(body_request);
-    return res.json({
-      id,
-      day,
-      name,
-      time,
-      city,
-      state,
-      user_id,
-      logo_url,
-      createdAt,
-      payment_module_view_type,
-    });
+    const createdData = await Club.create(body_request);
+    return res.json(createdData);
   }
 
   async update(req, res) {
@@ -163,18 +121,13 @@ class ClubController {
       });
     }
 
-    const {
-      id,
-      day,
-      name,
-      time,
-      city,
-      state,
-      user_id,
-      logo_url,
-      updatedAt,
-      payment_module_view_type,
-    } = await findResponse.update({
+    if (findResponse.user_id !== user_request.id) {
+      return res.status(401).json({
+        error: 'Você não possui permissão para editar este clube',
+      });
+    }
+
+    const updatedData = await findResponse.update({
       id: body_request.id,
       day: body_request.day,
       name: body_request.name,
@@ -184,18 +137,7 @@ class ClubController {
       logo_url: body_request.logo_url,
       payment_module_view_type: body_request.payment_module_view_type,
     });
-    return res.json({
-      id,
-      day,
-      name,
-      time,
-      city,
-      state,
-      user_id,
-      logo_url,
-      updatedAt,
-      payment_module_view_type,
-    });
+    return res.json(updatedData);
   }
 
   async delete(req, res) {
