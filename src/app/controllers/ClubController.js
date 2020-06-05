@@ -1,5 +1,7 @@
 import * as Yup from 'yup';
 import Club from '../models/Club';
+import Event from '../models/Event';
+import SuggestionEvent from '../models/SuggestionEvent';
 
 class ClubController {
   async index(req, res) {
@@ -65,6 +67,16 @@ class ClubController {
     body_request.payment_module_view_type = 'ALL';
 
     const createdData = await Club.create(body_request);
+
+    const suggestion_events = await SuggestionEvent.findAll();
+
+    suggestion_events.map(async suggestion => {
+      await Event.create({
+        club_id: createdData.id,
+        description: suggestion.description,
+        value: suggestion.value,
+      });
+    });
     return res.json(createdData);
   }
 
