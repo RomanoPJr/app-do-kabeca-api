@@ -5,22 +5,6 @@ import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
 
-const getPaid = async ({ user_request, pageSize, pageNumber, year, month }) => {
-  const response = await MonthlyPayment.findAndCountAll({
-    limit: pageSize,
-    order: [['name', 'asc']],
-    offset: (pageNumber - 1) * pageSize,
-    where: {
-      club_id: user_request.club_id,
-      referent: {
-        [Op.gte]: new Date(`${year}-${month}-01`),
-        [Op.lte]: new Date(`${year}-${month}-31`),
-      },
-    },
-  });
-  return response;
-};
-
 const getTotalizers = async ({ user_request, year, month }) => {
   const paid = await MonthlyPayment.findAndCountAll({
     raw: true,
@@ -95,20 +79,24 @@ const getRegisters = async ({
   pageNumber,
   user_request,
 }) => {
-  // GET ALL PAYMENT NUMBERS OF THIS CLUB
-  const paid = await getPaid({
-    user_request,
-    pageSize,
-    pageNumber,
-    year,
-    month,
+  const paid = await MonthlyPayment.findAndCountAll({
+    limit: pageSize,
+    order: [['name', 'asc']],
+    offset: pageNumber * pageSize,
+    where: {
+      club_id: user_request.club_id,
+      referent: {
+        [Op.gte]: new Date(`${year}-${month}-01`),
+        [Op.lte]: new Date(`${year}-${month}-31`),
+      },
+    },
   });
 
   const phones = paid.rows.map(payment => payment.phone);
 
-  const debit = await User.findAll({
+  const debit = await User.findAndCountAll({
     limit: pageSize,
-    offset: (pageNumber - 1) * pageSize,
+    offset: pageNumber * pageSize,
     raw: true,
     nest: true,
     attributes: ['id', 'name', 'phone'],
@@ -137,26 +125,8 @@ const getRegisters = async ({
     ],
   });
 
-  const debitCount = await User.count({
-    where: {
-      phone: {
-        [Op.notIn]: phones,
-      },
-    },
-    include: [
-      {
-        model: ClubPlayer,
-        where: {
-          club_id: {
-            [Op.eq]: user_request.club_id,
-          },
-        },
-      },
-    ],
-  });
   const totalizers = await getTotalizers({ user_request, year, month });
-
-  return { paid, debit: { rows: debit, count: debitCount }, totalizers };
+  return { paid, debit, totalizers };
 };
 
 class MonthlyPaymentController {
@@ -164,7 +134,7 @@ class MonthlyPaymentController {
     const { user_request } = req.body;
     const {
       pageSize = 10,
-      pageNumber = 1,
+      pageNumber = 0,
       year = new Date().getFullYear(),
       month = new Date().getMonth() + 1,
     } = req.query;
@@ -202,7 +172,7 @@ class MonthlyPaymentController {
       year,
       month,
     });
-    console.log(debit);
+
     return res.json({
       pageSize,
       pageNumber,
