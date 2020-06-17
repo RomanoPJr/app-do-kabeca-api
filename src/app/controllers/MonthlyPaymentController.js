@@ -22,15 +22,24 @@ const getPaid = async ({ user_request, pageSize, pageNumber, year, month }) => {
 };
 
 const getTotalizers = async ({ user_request, year, month }) => {
-  const pageSize = 9999999;
-  const pageNumber = 1;
+  // const paid = await getPaid({
+  //   user_request,
+  //   pageSize,
+  //   pageNumber,
+  //   year,
+  //   month,
+  // });
 
-  const paid = await getPaid({
-    user_request,
-    pageSize,
-    pageNumber,
-    year,
-    month,
+  const paid = await MonthlyPayment.findAndCountAll({
+    raw: true,
+    nest: true,
+    where: {
+      club_id: user_request.club_id,
+      referent: {
+        [Op.gte]: new Date(`${year}-${month}-01`),
+        [Op.lte]: new Date(`${year}-${month}-31`),
+      },
+    },
   });
 
   const paidTotal = paid.rows.reduce(
@@ -47,12 +56,9 @@ const getTotalizers = async ({ user_request, year, month }) => {
   const phones = paid.rows.map(payment => payment.phone);
 
   const debit = await User.findAndCountAll({
-    limit: pageSize,
-    offset: (pageNumber - 1) * pageSize,
     raw: true,
     nest: true,
     attributes: ['id', 'name', 'phone'],
-    order: [['name', 'asc']],
     where: {
       phone: {
         [Op.notIn]: phones,
