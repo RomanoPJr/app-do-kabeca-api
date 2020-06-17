@@ -21,7 +21,18 @@ const getPaid = async ({ user_request, pageSize, pageNumber, year, month }) => {
   return response;
 };
 
-const getTotalizers = async ({ paid, debit }) => {
+const getTotalizers = async ({ user_request, year, month }) => {
+  const pageSize = 9999999;
+  const pageNumber = 1;
+
+  const paid = await getPaid({
+    user_request,
+    pageSize,
+    pageNumber,
+    year,
+    month,
+  });
+
   const paidTotal = paid.rows.reduce(
     (accumulator, payment) => ({
       due_total: accumulator.due_total + payment.due_value,
@@ -32,6 +43,33 @@ const getTotalizers = async ({ paid, debit }) => {
       paid_total: 0,
     }
   );
+
+  const phones = paid.rows.map(payment => payment.phone);
+
+  const debit = await User.findAndCountAll({
+    limit: pageSize,
+    offset: (pageNumber - 1) * pageSize,
+    raw: true,
+    nest: true,
+    attributes: ['id', 'name', 'phone'],
+    order: [['name', 'asc']],
+    where: {
+      phone: {
+        [Op.notIn]: phones,
+      },
+    },
+    include: [
+      {
+        model: ClubPlayer,
+        attributes: ['monthly_payment', 'position'],
+        where: {
+          club_id: {
+            [Op.eq]: user_request.club_id,
+          },
+        },
+      },
+    ],
+  });
 
   const debitTotal = debit.rows.reduce((accumulator, debitCurrent) => {
     const value =
@@ -101,7 +139,7 @@ const getRegisters = async ({
     ],
   });
 
-  const totalizers = await getTotalizers({ paid, debit });
+  const totalizers = await getTotalizers({ user_request, year, month });
 
   return { paid, debit, totalizers };
 };
@@ -202,11 +240,7 @@ class MonthlyPaymentController {
       ],
     });
 
-    const totalizers = await getTotalizers({
-      club_id: user_request.club_id,
-      year,
-      month,
-    });
+    const totalizers = await getTotalizers({ user_request, year, month });
     return res.json({
       pageSize,
       pageNumber,
