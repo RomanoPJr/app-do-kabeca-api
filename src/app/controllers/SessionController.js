@@ -84,6 +84,54 @@ class SessionController {
       }),
     });
   }
+
+  async storeAdmin(req, res) {
+    const { user_request, ...body } = req.body;
+
+    if (!user_request || user_request.type !== 'ADMIN') {
+      return res
+        .status(401)
+        .json({ error: 'Você não possui acesso a esta funcionalidade' });
+    }
+
+    const schema = Yup.object().shape({
+      user_id: Yup.string().required('Nenhum Organizador foi informado'),
+    });
+
+    const validate = await schema.validate(body).catch(err => {
+      return err.message ? { error: err.message } : {};
+    });
+
+    if (validate.error) {
+      return res.status(400).json({ error: validate.error });
+    }
+
+    const user = await User.findOne({
+      where: { id: body.user_id },
+      attributes: [
+        'id',
+        'name',
+        'status',
+        'password_hash',
+        'type',
+        'createdAt',
+      ],
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuário não encontrado' });
+    }
+
+    return res.json({
+      user: {
+        name: user.name,
+        type: user.type,
+      },
+      token: jwt.sign({ id: user.id }, authConfig.secret, {
+        expiresIn: authConfig.expiresin,
+      }),
+    });
+  }
 }
 
 export default new SessionController();
