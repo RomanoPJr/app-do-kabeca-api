@@ -37,11 +37,12 @@ routes.get('/suggestion_event/all', SuggestionEventController.all);
 
 // ADMIN ROUTES
 
+routes.post('/sessions/external', authAdmin, SessionController.storeAdmin);
+
 routes.get('/admin', authAdmin, AdminController.index);
 routes.post('/admin', authAdmin, AdminController.store);
 routes.put('/admin', authAdmin, AdminController.update);
 routes.delete('/admin/:id', authAdmin, AdminController.delete);
-routes.post('/session_organizer', authAdmin, SessionController.storeAdmin);
 
 routes.get('/organizer', authAdmin, OrganizerController.index);
 routes.put('/organizer', authAdmin, OrganizerController.update);
