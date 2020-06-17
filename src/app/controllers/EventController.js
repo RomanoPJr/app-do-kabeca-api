@@ -26,7 +26,7 @@ class EventController {
       where: { club_id: club.id },
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
-      attributes: ['id', 'description', 'value'],
+      attributes: ['id', 'description', 'value', 'updatedAt'],
       order: [['value', 'desc']],
     });
 
