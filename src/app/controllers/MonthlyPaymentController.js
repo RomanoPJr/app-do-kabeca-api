@@ -130,7 +130,6 @@ class MonthlyPaymentController {
     const debit = await User.findAndCountAll({
       limit: pageSize,
       offset: (pageNumber - 1) * pageSize,
-      attributes: ['id', 'name', 'phone'],
       order: [['name', 'asc']],
       where: {
         phone: {
