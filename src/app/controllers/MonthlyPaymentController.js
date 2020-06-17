@@ -160,18 +160,53 @@ class MonthlyPaymentController {
     const { user_request } = req.body;
     const {
       pageSize = 10,
-      pageNumber = 1,
+      pageNumber = 0,
       year = new Date().getFullYear(),
       month = new Date().getMonth() + 1,
     } = req.query;
 
-    const { debit, totalizers } = await getRegisters({
-      pageSize,
-      pageNumber,
-      user_request,
-      year,
-      month,
+    const paid = await MonthlyPayment.findAndCountAll({
+      where: {
+        club_id: user_request.club_id,
+        referent: {
+          [Op.gte]: new Date(`${year}-${month}-01`),
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
+      },
     });
+
+    const phones = paid.rows.map(payment => payment.phone);
+
+    const debit = await User.findAndCountAll({
+      limit: pageSize,
+      offset: pageNumber * pageSize,
+      attributes: ['id', 'name', 'phone'],
+      order: [['name', 'asc']],
+      where: {
+        phone: {
+          [Op.notIn]: phones,
+        },
+      },
+      include: [
+        {
+          model: ClubPlayer,
+          attributes: [
+            'id',
+            'user_id',
+            'monthly_payment',
+            'created_at',
+            'position',
+          ],
+          where: {
+            club_id: {
+              [Op.eq]: user_request.club_id,
+            },
+          },
+        },
+      ],
+    });
+
+    const totalizers = await getTotalizers({ user_request, year, month });
 
     return res.json({
       pageSize,
