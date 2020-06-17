@@ -22,14 +22,6 @@ const getPaid = async ({ user_request, pageSize, pageNumber, year, month }) => {
 };
 
 const getTotalizers = async ({ user_request, year, month }) => {
-  // const paid = await getPaid({
-  //   user_request,
-  //   pageSize,
-  //   pageNumber,
-  //   year,
-  //   month,
-  // });
-
   const paid = await MonthlyPayment.findAndCountAll({
     raw: true,
     nest: true,
@@ -114,7 +106,7 @@ const getRegisters = async ({
 
   const phones = paid.rows.map(payment => payment.phone);
 
-  const debit = await User.findAndCountAll({
+  const debit = await User.findAll({
     limit: pageSize,
     offset: (pageNumber - 1) * pageSize,
     raw: true,
@@ -145,9 +137,26 @@ const getRegisters = async ({
     ],
   });
 
+  const debitCount = await User.count({
+    where: {
+      phone: {
+        [Op.notIn]: phones,
+      },
+    },
+    include: [
+      {
+        model: ClubPlayer,
+        where: {
+          club_id: {
+            [Op.eq]: user_request.club_id,
+          },
+        },
+      },
+    ],
+  });
   const totalizers = await getTotalizers({ user_request, year, month });
 
-  return { paid, debit, totalizers };
+  return { paid, debit: { rows: debit, count: debitCount }, totalizers };
 };
 
 class MonthlyPaymentController {
@@ -193,7 +202,7 @@ class MonthlyPaymentController {
       year,
       month,
     });
-
+    console.log(debit);
     return res.json({
       pageSize,
       pageNumber,
