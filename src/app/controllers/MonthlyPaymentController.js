@@ -85,7 +85,7 @@ class MonthlyPaymentController {
     const paid = await MonthlyPayment.findAndCountAll({
       limit: pageSize,
       order: [['name', 'asc']],
-      offset: (pageNumber === 1 ? 0 : pageNumber) * pageSize,
+      offset: (pageNumber - 1) * pageSize,
       where: {
         club_id: user_request.club_id,
         referent: {
@@ -129,7 +129,7 @@ class MonthlyPaymentController {
 
     const debit = await User.findAndCountAll({
       limit: pageSize,
-      offset: (pageNumber === 1 ? 0 : pageNumber) * pageSize,
+      offset: (pageNumber - 1) * pageSize,
       attributes: ['id', 'name', 'phone'],
       order: [['name', 'asc']],
       where: {
