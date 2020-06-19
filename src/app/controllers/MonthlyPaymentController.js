@@ -224,10 +224,6 @@ class MonthlyPaymentController {
 
   async store(req, res) {
     const { user_request, ...body_request } = req.body;
-    const {
-      year = new Date().getFullYear(),
-      month = new Date().getMonth() + 1,
-    } = req.query;
 
     const schema = Yup.object().shape({
       club_player_id: Yup.number().required('Nenhum jogador foi informado'),
@@ -260,6 +256,13 @@ class MonthlyPaymentController {
         error: 'Jogador não pertence ao seu clube',
       });
     }
+
+    const year = body_request.year
+      ? body_request.year
+      : new Date().getFullYear();
+    const month = body_request.month
+      ? body_request.month
+      : new Date().getMonth() + 1;
 
     const payment = await MonthlyPayment.create({
       due_value: body_request.due_value,
