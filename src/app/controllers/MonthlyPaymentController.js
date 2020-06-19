@@ -48,6 +48,9 @@ const getTotalizers = async ({ user_request, year, month }) => {
           club_id: {
             [Op.eq]: user_request.club_id,
           },
+          created_at: {
+            [Op.lte]: new Date(`${year}-${month}-31`),
+          },
         },
       },
     ],
