@@ -7,5 +7,5 @@ module.exports = {
       defaultValue: '30',
     });
   },
-  down: () => { },
+  down: () => {},
 };

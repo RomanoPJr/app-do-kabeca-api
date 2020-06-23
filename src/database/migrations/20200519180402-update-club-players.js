@@ -3,7 +3,7 @@ module.exports = {
     return Promise.all([
       queryInterface.removeColumn('club_players', 'type'),
       queryInterface.addColumn('club_players', 'monthly_payment', {
-        type: Sequelize.FLOAT(2),
+        type: Sequelize.DECIMAL,
         allowNull: false,
         defaultValue: 0,
       }),

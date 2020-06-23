@@ -7,8 +7,8 @@ class MonthlyPayment extends Model {
         club_id: Sequelize.INTEGER,
         name: Sequelize.STRING,
         phone: Sequelize.STRING,
-        due_value: Sequelize.INTEGER,
-        paid_value: Sequelize.INTEGER,
+        due_value: Sequelize.DECIMAL,
+        paid_value: Sequelize.DECIMAL,
         referent: Sequelize.DATEONLY,
         position: Sequelize.ENUM(
           'GOLEIRO',
@@ -25,10 +25,6 @@ class MonthlyPayment extends Model {
 
     return this;
   }
-
-  // static associate(models) {
-  //   this.belongsTo(models.Club);
-  // }
 }
 
 export default MonthlyPayment;

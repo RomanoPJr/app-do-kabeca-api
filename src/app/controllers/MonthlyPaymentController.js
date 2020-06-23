@@ -19,10 +19,12 @@ const getTotalizers = async ({ user_request, year, month }) => {
   });
 
   const paidTotal = paid.rows.reduce(
-    (accumulator, payment) => ({
-      due_total: accumulator.due_total + payment.due_value,
-      paid_total: accumulator.paid_total + payment.paid_value,
-    }),
+    (accumulator, payment) => {
+      return {
+        due_total: accumulator.due_total + Number(payment.due_value),
+        paid_total: accumulator.paid_total + Number(payment.paid_value),
+      };
+    },
     {
       due_total: 0,
       paid_total: 0,
@@ -60,7 +62,7 @@ const getTotalizers = async ({ user_request, year, month }) => {
     const value =
       debitCurrent.ClubPlayers.position === 'COLABORADOR'
         ? 0
-        : debitCurrent.ClubPlayers.monthly_payment;
+        : Number(debitCurrent.ClubPlayers.monthly_payment);
     return accumulator + value;
   }, 0);
 
