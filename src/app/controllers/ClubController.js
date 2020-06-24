@@ -35,6 +35,7 @@ class ClubController {
 
     const totals = clubPlayers.reduce(
       (accumulator, current) => {
+        console.log(current.User.birth_date ? '1' : '0');
         return {
           total_associados: accumulator.total_associados + 1,
           total_goleiros:
@@ -47,7 +48,11 @@ class ClubController {
             accumulator.total_pagantes + (current.monthly_payment > 0 ? 1 : 0),
           average_age:
             accumulator.average_age +
-            differenceInYears(Date.now(), new Date(current.User.birth_date)),
+            (current.User.birth_date
+              ? differenceInYears(Date.now(), new Date(current.User.birth_date))
+              : 0),
+          total_age_informed:
+            accumulator.total_age_informed + (current.User.birth_date ? 1 : 0),
         };
       },
       {
@@ -56,6 +61,7 @@ class ClubController {
         total_colaboradores: 0,
         total_pagantes: 0,
         average_age: 0,
+        total_age_informed: 0,
       }
     );
 
@@ -63,7 +69,7 @@ class ClubController {
       ...findOneData,
       totals: {
         ...totals,
-        average_age: totals.average_age / totals.total_associados,
+        average_age: totals.average_age / totals.total_age_informed,
       },
     });
   }
