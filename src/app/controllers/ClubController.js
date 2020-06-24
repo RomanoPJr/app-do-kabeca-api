@@ -1,13 +1,17 @@
 import * as Yup from 'yup';
+import { differenceInYears } from 'date-fns';
 import Club from '../models/Club';
 import Event from '../models/Event';
 import SuggestionEvent from '../models/SuggestionEvent';
+import ClubPlayers from '../models/ClubPlayer';
+import User from '../models/User';
 
 class ClubController {
   async index(req, res) {
     const { body } = req;
 
     const findOneData = await Club.findOne({
+      raw: true,
       where: { user_id: body.user_request.id },
     });
 
@@ -15,7 +19,53 @@ class ClubController {
       return res.status(404).json({ error: 'Nenhum clube configurado' });
     }
 
-    return res.json(findOneData);
+    const clubPlayers = await ClubPlayers.findAll({
+      raw: true,
+      nest: true,
+      where: {
+        club_id: findOneData.id,
+      },
+      include: [
+        {
+          model: User,
+          attributes: ['birth_date'],
+        },
+      ],
+    });
+
+    const totals = clubPlayers.reduce(
+      (accumulator, current) => {
+        return {
+          total_associados: accumulator.total_associados + 1,
+          total_goleiros:
+            accumulator.total_goleiros +
+            (current.position === 'GOLEIRO' ? 1 : 0),
+          total_colaboradores:
+            accumulator.total_colaboradores +
+            (current.position === 'COLABORADOR' ? 1 : 0),
+          total_pagantes:
+            accumulator.total_pagantes + (current.monthly_payment > 0 ? 1 : 0),
+          average_age:
+            accumulator.average_age +
+            differenceInYears(Date.now(), new Date(current.User.birth_date)),
+        };
+      },
+      {
+        total_associados: 0,
+        total_goleiros: 0,
+        total_colaboradores: 0,
+        total_pagantes: 0,
+        average_age: 0,
+      }
+    );
+
+    return res.json({
+      ...findOneData,
+      totals: {
+        ...totals,
+        average_age: totals.average_age / totals.total_associados,
+      },
+    });
   }
 
   async store(req, res) {
