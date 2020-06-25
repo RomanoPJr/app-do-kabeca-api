@@ -292,6 +292,8 @@ class MonthlyPaymentController {
     }
 
     const paid = await MonthlyPayment.findAndCountAll({
+      raw: true,
+      nest: true,
       where: {
         club_id: user_request.club_id,
         referent: {
