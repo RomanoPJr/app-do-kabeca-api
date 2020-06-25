@@ -47,7 +47,7 @@ class ClubController {
           total_pagantes:
             accumulator.total_pagantes + (current.monthly_payment > 0 ? 1 : 0),
           total_nao_pagantes:
-            accumulator.total_pagantes +
+            accumulator.total_nao_pagantes +
             (current.monthly_payment === 0 ? 1 : 0),
           average_age:
             accumulator.average_age +
