@@ -65,6 +65,7 @@ class ClubController {
         total_pagantes: 0,
         average_age: 0,
         total_age_informed: 0,
+        total_nao_pagantes: 0,
       }
     );
 
