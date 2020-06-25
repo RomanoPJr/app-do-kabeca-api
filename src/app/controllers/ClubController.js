@@ -44,10 +44,13 @@ class ClubController {
             accumulator.total_colaboradores +
             (current.position === 'COLABORADOR' ? 1 : 0),
           total_pagantes:
-            accumulator.total_pagantes + (current.monthly_payment > 0 ? 1 : 0),
+            accumulator.total_pagantes +
+            (Number(current.monthly_payment) > 0 ? 1 : 0),
           total_nao_pagantes:
             accumulator.total_nao_pagantes +
-            (current.monthly_payment === 0 || !current.monthly_payment ? 1 : 0),
+            (Number(current.monthly_payment) === 0 || !current.monthly_payment
+              ? 1
+              : 0),
           average_age:
             accumulator.average_age +
             (current.User.birth_date
