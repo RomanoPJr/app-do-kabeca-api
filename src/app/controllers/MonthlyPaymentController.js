@@ -123,6 +123,10 @@ class MonthlyPaymentController {
     const paid = await MonthlyPayment.findAndCountAll({
       where: {
         club_id: user_request.club_id,
+        referent: {
+          [Op.gte]: new Date(`${year}-${month}-01`),
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
       },
     });
 
@@ -150,9 +154,6 @@ class MonthlyPaymentController {
           where: {
             club_id: {
               [Op.eq]: user_request.club_id,
-            },
-            created_at: {
-              [Op.lte]: new Date(`${year}-${month}-31`),
             },
           },
         },
