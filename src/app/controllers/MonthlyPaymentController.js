@@ -1,6 +1,7 @@
 import * as Yup from 'yup';
 
 import { Op } from 'sequelize';
+import { response } from 'express';
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
@@ -280,6 +281,65 @@ class MonthlyPaymentController {
     });
 
     return res.json(payment);
+  }
+
+  async storeNonPaying(req, res) {
+    const { user_request } = req.body;
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.status(400).json({ message: 'Informe o mês e o Ano' });
+    }
+
+    const paid = await MonthlyPayment.findAndCountAll({
+      where: {
+        club_id: user_request.club_id,
+        referent: {
+          [Op.gte]: new Date(`${year}-${month}-01`),
+          [Op.lte]: new Date(`${year}-${month}-31`),
+        },
+      },
+    });
+
+    const phones = paid.rows.map(payment => payment.phone);
+
+    const debit = await User.findAll({
+      raw: true,
+      nest: true,
+      where: {
+        phone: {
+          [Op.notIn]: phones,
+        },
+      },
+      include: [
+        {
+          model: ClubPlayer,
+          where: {
+            club_id: {
+              [Op.eq]: user_request.club_id,
+            },
+            created_at: {
+              [Op.lte]: new Date(`${year}-${month}-31`),
+            },
+            monthly_payment: 0,
+          },
+        },
+      ],
+    });
+
+    const payments = debit.map(item => ({
+      due_value: 0,
+      paid_value: 0,
+      referent: `${year}-${month}-01`,
+      club_id: user_request.club_id,
+      name: item.name,
+      phone: item.phone,
+      position: item.ClubPlayers.position,
+    }));
+
+    const responseB = await MonthlyPayment.bulkCreate(payments);
+
+    return res.json(responseB);
   }
 
   async update(req, res) {

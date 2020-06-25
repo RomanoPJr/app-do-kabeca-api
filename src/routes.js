@@ -103,5 +103,10 @@ routes.get('/payment/debit', authOrganizer, MonthlyPaymentController.listDebit);
 routes.post('/payment', authOrganizer, MonthlyPaymentController.store);
 routes.put('/payment', authOrganizer, MonthlyPaymentController.update);
 routes.delete('/payment/:id', authOrganizer, MonthlyPaymentController.delete);
+routes.post(
+  '/payment_non_paying',
+  authOrganizer,
+  MonthlyPaymentController.storeNonPaying
+);
 
 export default routes;
