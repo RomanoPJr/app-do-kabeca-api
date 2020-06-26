@@ -162,7 +162,6 @@ class PlayerController {
       clubPlayerData.monthly_payment = 0;
     }
 
-    console.log(clubPlayerData);
     // CREATE ASSOCIATION WITH CLUB
     await ClubPlayer.create(clubPlayerData);
     return res.json({ message: 'Convite enviado com sucesso' });
@@ -226,7 +225,7 @@ class PlayerController {
     await findClubPlayer.update({
       invite,
       position,
-      created_at,
+      created_at: `${created_at} 00:00:00`,
       monthly_payment: new_monthly_payment,
     });
 
