@@ -222,13 +222,6 @@ class PlayerController {
     const new_monthly_payment =
       position === 'COLABORADOR' ? 0 : monthly_payment;
 
-    console.log({
-      invite,
-      position,
-      created_at: `${created_at} 00:00:00`,
-      monthly_payment: new_monthly_payment,
-    });
-
     await findClubPlayer.update({
       invite,
       position,
