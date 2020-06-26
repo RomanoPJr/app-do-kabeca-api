@@ -105,6 +105,7 @@ class PlayerController {
           ? field.required('Valor da Mensalidade é obrigatório')
           : field;
       }),
+      created_at: Yup.date().required('Data de Entrada é obrigatória'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -116,11 +117,12 @@ class PlayerController {
     }
 
     // SET CLUB PLAYER DATA
-    const { status, position, monthly_payment } = body_request;
+    const { status, position, monthly_payment, created_at } = body_request;
     const clubPlayerData = {
       status,
       club_id,
       position,
+      createdAt: `${created_at} 00:00:00`,
       monthly_payment,
     };
 
@@ -160,6 +162,7 @@ class PlayerController {
       clubPlayerData.monthly_payment = 0;
     }
 
+    console.log(clubPlayerData);
     // CREATE ASSOCIATION WITH CLUB
     await ClubPlayer.create(clubPlayerData);
     return res.json({ message: 'Convite enviado com sucesso' });
@@ -186,6 +189,7 @@ class PlayerController {
       monthly_payment: Yup.number().required(
         'Valor da Mensalidade é obrigatório'
       ),
+      created_at: Yup.date().required('Data de Entrada é obrigatória'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -214,14 +218,15 @@ class PlayerController {
       });
     }
 
-    const { invite, position, monthly_payment } = body_request;
+    const { invite, position, monthly_payment, created_at } = body_request;
 
     const new_monthly_payment =
       position === 'COLABORADOR' ? 0 : monthly_payment;
 
     await findClubPlayer.update({
-      position,
       invite,
+      position,
+      created_at,
       monthly_payment: new_monthly_payment,
     });
 

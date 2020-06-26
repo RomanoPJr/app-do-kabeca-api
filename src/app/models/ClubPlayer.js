@@ -8,6 +8,7 @@ class ClubPlayer extends Model {
         user_id: Sequelize.INTEGER,
         invite: Sequelize.ENUM('ACEITO', 'AGUARDANDO', 'NEGADO', 'BLOQUEADO'),
         monthly_payment: Sequelize.DECIMAL,
+        created_at: Sequelize.DATE,
         position: Sequelize.ENUM(
           'GOLEIRO',
           'DEFESA',
