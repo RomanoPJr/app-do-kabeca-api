@@ -7,11 +7,14 @@ import ClubController from './app/controllers/ClubController';
 import UserController from './app/controllers/UserController';
 import AdminController from './app/controllers/AdminController';
 import EventController from './app/controllers/EventController';
+import MatchController from './app/controllers/MatchController';
 import PlayerController from './app/controllers/PlayerController';
 import SessionController from './app/controllers/SessionController';
 import SponsorController from './app/controllers/SponsorController';
 import StatuteController from './app/controllers/StatuteController';
 import OrganizerController from './app/controllers/OrganizerController';
+import MatchEventController from './app/controllers/MatchEventController';
+import EscalationController from './app/controllers/MatchEscalationController';
 import MonthlyPaymentController from './app/controllers/MonthlyPaymentController';
 import SuggestionEventController from './app/controllers/SuggestionEventController';
 import SuggestionStatuteController from './app/controllers/SuggestionStatuteController';
@@ -70,11 +73,13 @@ routes.put('/club', authOrganizer, ClubController.update);
 routes.delete('/club/:id', authOrganizer, ClubController.delete);
 
 routes.get('/event', authOrganizer, EventController.index);
+routes.get('/event/all', authOrganizer, EventController.fetchAll);
 routes.post('/event', authOrganizer, EventController.store);
 routes.put('/event', authOrganizer, EventController.update);
 routes.delete('/event/:id', authOrganizer, EventController.delete);
 
 routes.get('/player', authOrganizer, PlayerController.index);
+routes.get('/player/all', authOrganizer, PlayerController.fetchAll);
 routes.post('/player', authOrganizer, PlayerController.store);
 routes.put('/player', authOrganizer, PlayerController.update);
 routes.delete('/player/:id', authOrganizer, PlayerController.delete);
@@ -108,5 +113,19 @@ routes.post(
   authOrganizer,
   MonthlyPaymentController.storeNonPaying
 );
+
+routes.get('/match', authOrganizer, MatchController.index);
+routes.get('/match/:id', authOrganizer, MatchController.findOne);
+routes.post('/match', authOrganizer, MatchController.store);
+routes.put('/match', authOrganizer, MatchController.update);
+routes.delete('/match/:id', authOrganizer, MatchController.delete);
+
+routes.put('/escalation', authOrganizer, EscalationController.update);
+routes.post('/escalation', authOrganizer, EscalationController.store);
+routes.delete('/escalation/:id', authOrganizer, EscalationController.delete);
+
+routes.post('/match_event', authOrganizer, MatchEventController.store);
+// routes.put('/match', authOrganizer, MatchEventController.update);
+routes.delete('/match_event/:id', authOrganizer, MatchEventController.delete);
 
 export default routes;

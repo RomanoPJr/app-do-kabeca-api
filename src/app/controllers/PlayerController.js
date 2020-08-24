@@ -3,6 +3,7 @@ import Sequelize, { Op } from 'sequelize';
 
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
+import MatchEscalation from '../models/MatchEscalation';
 
 class PlayerController {
   async find(req, res) {
@@ -70,6 +71,49 @@ class PlayerController {
     });
   }
 
+  async fetchAll(req, res) {
+    const { orderBy = 'name', round, match_id } = req.query;
+    const { user_request } = req.body;
+
+    if (!round || !match_id) {
+      return res.status(400).json({
+        message: 'Você precisa informar o tempo e a partida',
+      });
+    }
+
+    const escaletedPlayers = await MatchEscalation.findAll({
+      raw: true,
+      attributes: ['user_id'],
+      where: {
+        match_id,
+        round,
+      },
+    });
+
+    const dataFindAll = await User.findAll({
+      order: [[orderBy, 'asc']],
+      attributes: ['id', 'name'],
+      where: {
+        id: {
+          [Op.notIn]: escaletedPlayers.map(i => i.user_id),
+        },
+      },
+      include: [
+        {
+          where: {
+            club_id: user_request.club_id,
+          },
+          model: ClubPlayer,
+          attributes: ['id'],
+        },
+      ],
+    });
+
+    return res.json({
+      data: dataFindAll,
+    });
+  }
+
   async store(req, res) {
     const { user_request, ...body_request } = req.body;
     const { club_id, plan_type } = user_request;
@@ -85,7 +129,6 @@ class PlayerController {
       });
     }
 
-    // VALIDATE FORM
     const schema = Yup.object().shape({
       name: Yup.string()
         .required('Nome é obrigatório')

@@ -38,6 +38,32 @@ class EventController {
     });
   }
 
+  async fetchAll(req, res) {
+    const { user_request } = req.body;
+
+    const club = await Club.findOne({
+      where: { user_id: user_request.id },
+      attributes: ['id'],
+    });
+
+    if (!club) {
+      return res.status(404).json({
+        error: 'Você ainda não configurou o seu clube',
+      });
+    }
+
+    const dataFindAll = await Event.findAll({
+      where: { club_id: club.id },
+      attributes: ['id', 'description', 'value', 'type', 'updatedAt'],
+      order: [['value', 'desc']],
+    });
+
+    return res.json({
+      success: true,
+      data: dataFindAll,
+    });
+  }
+
   async store(req, res) {
     const { user_request, ...body_request } = req.body;
 
@@ -63,8 +89,14 @@ class EventController {
     }
 
     const schema = Yup.object().shape({
-      description: Yup.string().required(),
-      value: Yup.number().required(),
+      description: Yup.string().required('Descrição não informada'),
+      value: Yup.number().required('Valor não informado'),
+      type: Yup.string()
+        .required('Tipo não informado')
+        .oneOf(
+          ['EVENTO 1', 'EVENTO 2', 'EVENTO 3', 'EVENTO 4', 'EVENTO 5'],
+          'Tipo não é válido'
+        ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {

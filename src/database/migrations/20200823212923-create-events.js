@@ -15,6 +15,20 @@ module.exports = {
         },
         onUpdate: 'cascade',
         onDelete: 'cascade',
+      },
+      type: {
+        type: Sequelize.ENUM,
+        values: [
+          'GOL',
+          'VITORIA',
+          'EMPATE',
+          'DERROTA',
+          'EVENTO 1',
+          'EVENTO 2',
+          'EVENTO 3',
+          'EVENTO 4',
+          'EVENTO 5',
+        ],
         allowNull: false,
       },
       description: {
@@ -23,11 +37,11 @@ module.exports = {
       },
       value: {
         type: Sequelize.FLOAT(2),
-        allowNull: false,
       },
       status: {
         type: Sequelize.ENUM,
         values: ['ATIVO', 'INATIVO'],
+        allowNull: false,
         defaultValue: 'ATIVO',
       },
       created_at: {

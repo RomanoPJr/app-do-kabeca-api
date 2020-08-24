@@ -6,6 +6,7 @@ class Event extends Model {
       {
         club_id: Sequelize.INTEGER,
         description: Sequelize.STRING,
+        type: Sequelize.STRING,
         value: Sequelize.INTEGER,
       },
       {
