@@ -1,6 +1,7 @@
 import * as Yup from 'yup';
 import { Op } from 'sequelize';
 import MatchEscalation from '../models/MatchEscalation';
+import Event from '../models/Event';
 import Club from '../models/Club';
 import MatchEvent from '../models/MatchEvent';
 
@@ -20,28 +21,7 @@ class MatchEventController {
     }
 
     const schema = Yup.object().shape({
-      description: Yup.string().required('Nenhuma descrição informada'),
-      value: Yup.number().required('Nenhuma valor informado'),
-      user_id: Yup.number().required('Nenhum jogador informado'),
-      event_id: Yup.number().required('Nenhuma evento informado'),
       match_id: Yup.number().required('Nenhuma partida informada'),
-      escalation_id: Yup.number().required('Nenhuma escalação informada'),
-      type: Yup.string()
-        .required('Tipo não informado')
-        .oneOf(
-          [
-            'GOL',
-            'VITORIA',
-            'EMPATE',
-            'DERROTA',
-            'EVENTO 1',
-            'EVENTO 2',
-            'EVENTO 3',
-            'EVENTO 4',
-            'EVENTO 5',
-          ],
-          'Tipo é inválido'
-        ),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -52,26 +32,52 @@ class MatchEventController {
       return res.status(400).json({ message: validate.error });
     }
 
-    const event = await MatchEvent.findOne({
-      raw: true,
-      nest: true,
-      where: {
-        [Op.and]: {
-          match_id: body_request.match_id,
-          user_id: body_request.user_id,
-          type: {
-            [Op.in]: ['VITORIA', 'EMPATE', 'DERROTA'],
+    if (body_request.type !== 'GOL SOFRIDO') {
+      const event = await MatchEvent.findOne({
+        raw: true,
+        nest: true,
+        where: {
+          [Op.and]: {
+            match_id: body_request.match_id,
+            user_id: body_request.user_id,
+            type: {
+              [Op.in]: ['VITORIA', 'EMPATE', 'DERROTA'],
+            },
           },
         },
-      },
-    });
+      });
 
-    if (event) {
-      return res.status(400).json({
-        message: 'Não é possível inserir esse evento',
+      if (event) {
+        return res.status(400).json({
+          message: 'Não é possível inserir esse evento',
+        });
+      }
+    }
+
+    let findEvent = null;
+    if (body_request.event_id) {
+      findEvent = await Event.findByPk(body_request.event_id);
+    } else if (
+      body_request.type &&
+      (body_request.type === 'GOL' || body_request.type === 'GOL SOFRIDO')
+    ) {
+      findEvent = await Event.findOne({
+        where: {
+          type: body_request.type,
+        },
       });
     }
 
+    if (!findEvent) {
+      return res.status(400).json({
+        message: 'Evento não encontrado',
+      });
+    }
+
+    body_request.event_id = findEvent.id;
+    body_request.description = findEvent.description;
+    body_request.value = findEvent.value;
+    body_request.type = findEvent.type;
     body_request.club_id = dataFindOneClub.id;
 
     const createResponse = await MatchEvent.create(body_request);
@@ -125,7 +131,7 @@ class MatchEventController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await MatchEscalation.destroy({
+    await MatchEvent.destroy({
       where: {
         id,
       },
