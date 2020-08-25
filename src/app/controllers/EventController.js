@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { Op } from 'sequelize';
 import Event from '../models/Event';
 import Club from '../models/Club';
 
@@ -26,7 +27,7 @@ class EventController {
       where: { club_id: club.id },
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
-      attributes: ['id', 'description', 'value', 'updatedAt'],
+      attributes: ['id', 'description', 'value', 'type', 'updatedAt'],
       order: [['value', 'desc']],
     });
 
@@ -82,9 +83,9 @@ class EventController {
       where: { club_id: club.id },
     });
 
-    if (countEvent === 10) {
+    if (countEvent === 5) {
       return res.status(400).json({
-        error: 'Você já atingiu o limite de 10 eventos',
+        error: 'Você já atingiu o limite de 5 eventos',
       });
     }
 
@@ -107,10 +108,31 @@ class EventController {
       return res.status(400).json({ error: validate.error });
     }
     const EventExists = await Event.findOne({
-      where: { description: body_request.description },
+      where: {
+        [Op.or]: {
+          [Op.and]: {
+            description: body_request.description,
+            club_id: club.id,
+          },
+          [Op.and]: {
+            type: body_request.type,
+            club_id: club.id,
+          },
+        },
+      },
     });
 
     if (EventExists) {
+      return res.status(400).json({
+        error: 'Já existe um evento com este nome ou cor',
+      });
+    }
+
+    const ColorExists = await Event.findOne({
+      where: { description: body_request.description },
+    });
+
+    if (ColorExists) {
       return res.status(400).json({
         error: 'Já existe um evento com este nome',
       });
