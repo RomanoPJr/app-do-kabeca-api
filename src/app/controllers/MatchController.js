@@ -69,7 +69,6 @@ class MatchController {
         {
           required: false,
           model: MatchEvent,
-          // order: [['created_at', 'ASC']],
           include: [
             {
               required: false,
@@ -89,7 +88,36 @@ class MatchController {
       order: [[MatchEvent, 'created_at', 'DESC']],
     });
 
-    return res.json({ data, message: 'success' });
+    let placar = {
+      team_a_goals: 0,
+      team_b_goals: 0,
+    };
+
+    if (data.MatchEvents) {
+      placar = data.MatchEvents.reduce(
+        (acc, cur) => {
+          if (cur.MatchEscalation) {
+            if (cur.MatchEscalation.team === 'TIME A' && cur.type === 'GOL') {
+              acc.team_a_goals += 1;
+            } else if (
+              cur.MatchEscalation.team === 'TIME B' &&
+              cur.type === 'GOL'
+            ) {
+              acc.team_b_goals += 1;
+            }
+          } else if (cur.type === 'GOL SOFRIDO') {
+            acc.team_b_goals += 1;
+          }
+          return acc;
+        },
+        {
+          team_a_goals: 0,
+          team_b_goals: 0,
+        }
+      );
+    }
+
+    return res.json({ data: { ...data.toJSON(), placar }, message: 'success' });
   }
 
   async store(req, res) {
@@ -180,12 +208,7 @@ class MatchController {
     }
 
     const schema = Yup.object().shape({
-      name: Yup.string().required('Nome é obrigatório'),
-      value: Yup.number().required('Valor é obrigatório'),
-      banner_url: Yup.string('Banner é inválido'),
-      status: Yup.string()
-        .required('Email é obrigatório')
-        .oneOf(['ATIVO', 'INATIVO'], 'Status é inválido'),
+      id: Yup.number().required('Nenhuma partida informada'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -196,35 +219,45 @@ class MatchController {
       return res.status(400).json({ error: validate.error });
     }
 
-    // const dataFindByPk = await Sponsor.findByPk(body_request.id);
+    const find = await Match.findByPk(body_request.id);
 
-    // if (!dataFindByPk) {
-    //   return res.status(400).json({
-    //     error: 'Patrocinador não encontrado',
-    //   });
-    // }
+    if (!find) {
+      return res.status(400).json({
+        error: 'Partida não encontrada',
+      });
+    }
 
-    // if (body_request.name !== dataFindByPk.name) {
-    //   const dataFindOne = await Sponsor.findOne({
-    //     where: { name: body_request.name },
-    //   });
+    if (
+      find.timer_1 &&
+      body_request.timer_1 &&
+      body_request.timer_1 !== find.timer_1
+    ) {
+      return res.status(400).json({
+        error: 'Este cronômetro já foi iniciado.',
+      });
+    }
 
-    //   if (dataFindOne) {
-    //     return res.status(400).json({
-    //       error: 'Já existe um patrocinador com este nome',
-    //     });
-    //   }
-    // }
+    if (
+      find.timer_2 &&
+      body_request.timer_2 &&
+      body_request.timer_2 !== find.timer_2
+    ) {
+      return res.status(400).json({
+        error: 'Este cronômetro já foi iniciado.',
+      });
+    }
 
-    // const { name, value, status, banner_url } = body_request;
-    // const updateResponse = await dataFindByPk.update({
-    //   name,
-    //   value,
-    //   status,
-    //   banner_url,
-    // });
-    // return res.json(updateResponse);
-    return res.json({});
+    const { timer_1, timer_2 } = body_request;
+
+    await find.update({
+      timer_1,
+      timer_2,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Partida atualizada com sucesso',
+    });
   }
 
   async delete(req, res) {

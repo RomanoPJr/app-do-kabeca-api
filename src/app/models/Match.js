@@ -13,6 +13,8 @@ class Match extends Model {
         modality: Sequelize.ENUM('1 TEMPO', '2 TEMPOS'),
         score_type: Sequelize.ENUM('RANKEADA', 'NÃO RANKEADA'),
         type: Sequelize.ENUM('PARTIDA INTERNA', 'PARTIDA EXTERNA'),
+        timer_1: Sequelize.DATE,
+        timer_2: Sequelize.DATE,
       },
       {
         sequelize,
