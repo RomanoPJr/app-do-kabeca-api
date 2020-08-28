@@ -186,6 +186,8 @@ class MatchController {
 
     body_request.club_id = dataFindOneClub.id;
 
+    console.log(body_request);
+
     const createResponse = await Match.create(body_request);
     return res.json({
       data: createResponse,
@@ -247,12 +249,10 @@ class MatchController {
       });
     }
 
-    const { timer_1, timer_2 } = body_request;
+    // const { timer_1, timer_2, ...data } = body_request;
+    console.log(body_request);
 
-    await find.update({
-      timer_1,
-      timer_2,
-    });
+    await find.update(body_request);
 
     return res.json({
       success: true,

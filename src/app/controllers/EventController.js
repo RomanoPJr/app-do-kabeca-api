@@ -24,6 +24,8 @@ class EventController {
     });
 
     const dataFindAll = await Event.findAll({
+      raw: true,
+      nest: true,
       where: { club_id: club.id },
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
@@ -31,11 +33,34 @@ class EventController {
       order: [['value', 'desc']],
     });
 
+    const notIncludedEvents = [];
+
+    if (!dataFindAll.find(i => i.type === 'VITORIA')) {
+      notIncludedEvents.push('VITORIA');
+    }
+    if (!dataFindAll.find(i => i.type === 'EMPATE')) {
+      notIncludedEvents.push('EMPATE');
+    }
+    if (!dataFindAll.find(i => i.type === 'DERROTA')) {
+      notIncludedEvents.push('DERROTA');
+    }
+
+    const fixedEvents = await Event.findAll({
+      attributes: ['description', 'type'],
+      where: {
+        type: {
+          [Op.in]: notIncludedEvents,
+        },
+        club_id: null,
+        value: null,
+      },
+    });
+
     return res.json({
       pageSize,
       pageNumber,
       pageTotal: Math.ceil(pageTotal / pageSize),
-      data: dataFindAll,
+      data: [...fixedEvents, ...dataFindAll],
     });
   }
 
@@ -79,23 +104,22 @@ class EventController {
       });
     }
 
-    const countEvent = await Event.count({
-      where: { club_id: club.id },
-    });
-
-    if (countEvent === 5) {
-      return res.status(400).json({
-        error: 'Você já atingiu o limite de 5 eventos',
-      });
-    }
-
     const schema = Yup.object().shape({
       description: Yup.string().required('Descrição não informada'),
       value: Yup.number().required('Valor não informado'),
       type: Yup.string()
         .required('Tipo não informado')
         .oneOf(
-          ['EVENTO 1', 'EVENTO 2', 'EVENTO 3', 'EVENTO 4', 'EVENTO 5'],
+          [
+            'VITORIA',
+            'EMPATE',
+            'DERROTA',
+            'EVENTO 1',
+            'EVENTO 2',
+            'EVENTO 3',
+            'EVENTO 4',
+            'EVENTO 5',
+          ],
           'Tipo não é válido'
         ),
     });
@@ -107,6 +131,17 @@ class EventController {
     if (validate.error) {
       return res.status(400).json({ error: validate.error });
     }
+
+    const countEvent = await Event.count({
+      where: { club_id: club.id },
+    });
+
+    if (countEvent === 8) {
+      return res.status(400).json({
+        error: 'Você já atingiu o limite de 5 eventos',
+      });
+    }
+
     const EventExists = await Event.findOne({
       where: {
         [Op.or]: {
@@ -121,21 +156,18 @@ class EventController {
         },
       },
     });
-
     if (EventExists) {
       return res.status(400).json({
-        error: 'Já existe um evento com este nome ou cor',
+        error: 'Já existe um evento com este nome ou tipo',
       });
     }
 
-    const ColorExists = await Event.findOne({
-      where: { description: body_request.description },
-    });
-
-    if (ColorExists) {
-      return res.status(400).json({
-        error: 'Já existe um evento com este nome',
-      });
+    if (
+      body_request.type === 'VITORIA' ||
+      body_request.type === 'EMPATE' ||
+      body_request.type === 'DERROTA'
+    ) {
+      body_request.description = body_request.type;
     }
 
     body_request.club_id = club.id;
@@ -146,12 +178,27 @@ class EventController {
 
   async update(req, res) {
     const { body } = req;
-    const { id, description, value } = body;
+    const { id, description, value, type } = body;
 
     const schema = Yup.object().shape({
       id: Yup.number().required('O campo id é obrigatório.'),
-      description: Yup.string().required('O campo Descrição é obrigatório.'),
-      value: Yup.number().required('O campo valor é obrigatório.'),
+      description: Yup.string().required('Descrição não informada'),
+      value: Yup.number().required('Valor não informado'),
+      type: Yup.string()
+        .required('Tipo não informado')
+        .oneOf(
+          [
+            'VITORIA',
+            'EMPATE',
+            'DERROTA',
+            'EVENTO 1',
+            'EVENTO 2',
+            'EVENTO 3',
+            'EVENTO 4',
+            'EVENTO 5',
+          ],
+          'Tipo não é válido'
+        ),
     });
 
     const validate = await schema.validate(body).catch(err => {
@@ -180,6 +227,26 @@ class EventController {
           error: 'Já existe um evento com este nome',
         });
       }
+    }
+
+    if (description !== findResponse.description) {
+      const EventExists = await Event.findOne({
+        where: { type: body.type },
+      });
+
+      if (EventExists) {
+        return res.status(400).json({
+          error: 'Já existe um evento deste tipo',
+        });
+      }
+    }
+
+    if (
+      body.type === 'VITORIA' ||
+      body.type === 'EMPATE' ||
+      body.type === 'DERROTA'
+    ) {
+      body.description = body.type;
     }
 
     const updateResponse = await findResponse.update({ description, value });
