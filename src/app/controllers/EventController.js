@@ -79,7 +79,12 @@ class EventController {
     }
 
     const dataFindAll = await Event.findAll({
-      where: { club_id: club.id },
+      where: {
+        club_id: club.id,
+        type: {
+          [Op.notIn]: ['VITORIA', 'EMPATE', 'DERROTA'],
+        },
+      },
       attributes: ['id', 'description', 'value', 'type', 'updatedAt'],
       order: [['value', 'desc']],
     });
