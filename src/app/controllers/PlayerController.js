@@ -1,9 +1,13 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable prefer-destructuring */
 import * as Yup from 'yup';
 import Sequelize, { Op } from 'sequelize';
 
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MatchEscalation from '../models/MatchEscalation';
+import Match from '../models/Match';
+import MatchInviteConfirmation from '../models/MatchInviteConfirmation';
 
 class PlayerController {
   async find(req, res) {
@@ -72,7 +76,7 @@ class PlayerController {
   }
 
   async fetchAll(req, res) {
-    const { orderBy = 'name', round, match_id } = req.query;
+    const { round, match_id } = req.query;
     const { user_request } = req.body;
 
     if (!round || !match_id) {
@@ -90,27 +94,76 @@ class PlayerController {
       },
     });
 
-    const dataFindAll = await User.findAll({
-      order: [[orderBy, 'asc']],
-      attributes: ['id', 'name'],
+    const match = await Match.findByPk(match_id);
+
+    const dataFindAll = await ClubPlayer.findAll({
+      attributes: ['id'],
       where: {
-        id: {
-          [Op.notIn]: escaletedPlayers.map(i => i.user_id),
-        },
+        club_id: user_request.club_id,
       },
       include: [
         {
+          model: User,
+          attributes: ['id', 'name'],
           where: {
-            club_id: user_request.club_id,
+            id: {
+              [Op.notIn]: escaletedPlayers.map(i => i.user_id),
+            },
           },
-          model: ClubPlayer,
-          attributes: ['id'],
+        },
+        {
+          required: false,
+          limit: 1,
+          attributes: [
+            'club_player_id',
+            'match_id',
+            'match_date',
+            'created_at',
+          ],
+          order: [['created_at', 'asc']],
+          model: MatchInviteConfirmation,
+          where: {
+            match_date: match.toJSON().date,
+          },
         },
       ],
     });
 
+    const newPlayers = dataFindAll.map(p => {
+      const pJson = p.toJSON();
+
+      if (pJson.MatchInviteConfirmations.length > 0) {
+        pJson.MatchInviteConfirmations = pJson.MatchInviteConfirmations[0];
+      } else {
+        pJson.MatchInviteConfirmations = null;
+      }
+      return pJson;
+    });
+
+    const confirmated = newPlayers.filter(player => {
+      return player.MatchInviteConfirmations;
+    });
+
+    const unconfirmated = newPlayers.filter(player => {
+      return !player.MatchInviteConfirmations;
+    });
+
+    confirmated.sort(function(a, b) {
+      return a.MatchInviteConfirmations.created_at <
+        b.MatchInviteConfirmations.created_at
+        ? -1
+        : a.MatchInviteConfirmations.created_at >
+          b.MatchInviteConfirmations.created_at
+        ? 1
+        : 0;
+    });
+
+    unconfirmated.sort(function(a, b) {
+      return a.User.name < b.User.name ? -1 : a.User.name > b.User.name ? 1 : 0;
+    });
+
     return res.json({
-      data: dataFindAll,
+      data: [...confirmated, ...unconfirmated],
     });
   }
 

@@ -11,6 +11,8 @@ import ClubPlayer from '../app/models/ClubPlayer';
 import MonthlyPayment from '../app/models/MonthlyPayment';
 import MatchEscalation from '../app/models/MatchEscalation';
 import MatchEvent from '../app/models/MatchEvent';
+import MatchInvite from '../app/models/MatchInvite';
+import MatchInviteConfirmation from '../app/models/MatchInviteConfirmation';
 import SuggestionEvent from '../app/models/SuggestionEvent';
 import SuggestionStatute from '../app/models/SuggestionStatute';
 
@@ -19,14 +21,16 @@ const models = [
   Club,
   Event,
   Match,
-  MatchEvent,
-  MatchEscalation,
   Sponsor,
   Statute,
   ClubPlayer,
+  MatchEvent,
+  MatchInvite,
   MonthlyPayment,
   SuggestionEvent,
+  MatchEscalation,
   SuggestionStatute,
+  MatchInviteConfirmation,
 ];
 
 class Database {
