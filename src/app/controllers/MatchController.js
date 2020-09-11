@@ -8,9 +8,10 @@ import MatchEvent from '../models/MatchEvent';
 
 class MatchController {
   async index(req, res) {
-    const { pageSize = 10, pageNumber = 1 } = req.query;
+    const { pageSize = 10, pageNumber = 1, date } = req.query;
     const { user_request } = req.body;
 
+    console.log(date);
     if (!user_request.club_id) {
       return res.status(404).json({
         error: 'Você ainda não configurou o seu clube',
@@ -20,16 +21,36 @@ class MatchController {
     const { count, rows } = await Match.findAndCountAll({
       where: { club_id: user_request.club_id },
       offset: (pageNumber - 1) * pageSize,
-      raw: true,
-      nest: true,
       limit: pageSize,
       order: [['date', 'asc']],
+      attributes: ['date'],
+      group: ['date'],
     });
 
     return res.json({
       pageSize,
       pageNumber,
       pageTotal: Math.ceil(count / pageSize),
+      data: rows,
+    });
+  }
+
+  async listByDate(req, res) {
+    const { date } = req.query;
+    const { user_request } = req.body;
+
+    if (!user_request.club_id) {
+      return res.status(404).json({
+        error: 'Você ainda não configurou o seu clube',
+      });
+    }
+
+    const { rows } = await Match.findAndCountAll({
+      where: { club_id: user_request.club_id, date },
+      order: [['id', 'asc']],
+    });
+
+    return res.json({
       data: rows,
     });
   }

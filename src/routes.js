@@ -115,6 +115,7 @@ routes.post(
 );
 
 routes.get('/match', authOrganizer, MatchController.index);
+routes.get('/match/byDate', authOrganizer, MatchController.listByDate);
 routes.get('/match/:id', authOrganizer, MatchController.findOne);
 routes.post('/match', authOrganizer, MatchController.store);
 routes.put('/match', authOrganizer, MatchController.update);
