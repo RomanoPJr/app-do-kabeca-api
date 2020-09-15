@@ -176,9 +176,9 @@ class PlayerController {
       where: { club_id },
     });
 
-    if (dataCount === plan_type) {
+    if (dataCount >= plan_type) {
       return res.status(400).json({
-        error: 'Você já atingiu o limite de 60 jogadores',
+        error: `Você já atingiu o limite de ${plan_type} jogadores`,
       });
     }
 
