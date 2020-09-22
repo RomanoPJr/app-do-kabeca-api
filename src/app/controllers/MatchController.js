@@ -154,9 +154,9 @@ class MatchController {
       });
     }
 
-    const currDate = new Date();
+    const currDate = new Date(body_request.date);
     const currYear = currDate.getFullYear();
-    const currMonth = currDate.getMonth();
+    const currMonth = currDate.getMonth() + 1;
     const dataCount = await Match.count({
       where: {
         club_id: dataFindOneClub.id,
@@ -205,8 +205,6 @@ class MatchController {
     }
 
     body_request.club_id = dataFindOneClub.id;
-
-    console.log(body_request);
 
     const createResponse = await Match.create(body_request);
     return res.json({
@@ -268,9 +266,6 @@ class MatchController {
         error: 'Este cronômetro já foi iniciado.',
       });
     }
-
-    // const { timer_1, timer_2, ...data } = body_request;
-    console.log(body_request);
 
     await find.update(body_request);
 
