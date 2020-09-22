@@ -8,10 +8,9 @@ import MatchEvent from '../models/MatchEvent';
 
 class MatchController {
   async index(req, res) {
-    const { pageSize = 10, pageNumber = 1, date } = req.query;
+    const { pageSize = 10, pageNumber = 1 } = req.query;
     const { user_request } = req.body;
 
-    console.log(date);
     if (!user_request.club_id) {
       return res.status(404).json({
         error: 'Você ainda não configurou o seu clube',
@@ -168,7 +167,7 @@ class MatchController {
       },
     });
 
-    if (dataCount === 5) {
+    if (dataCount >= 5) {
       return res.status(400).json({
         message: 'Você já atingiu o limite de 5 partidas em um mês',
       });
