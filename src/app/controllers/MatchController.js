@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import { Op } from 'sequelize';
+import { format } from 'date-fns';
 import Club from '../models/Club';
 import User from '../models/User';
 import Match from '../models/Match';
@@ -154,22 +155,24 @@ class MatchController {
       });
     }
 
-    const currDate = new Date(body_request.date);
-    const currYear = currDate.getFullYear();
-    const currMonth = currDate.getMonth() + 1;
+    const currDate = body_request.date.split('-');
+    const currYear = currDate[0];
+    const currMonth = currDate[1];
     const dataCount = await Match.count({
       where: {
         club_id: dataFindOneClub.id,
         date: {
-          [Op.gte]: new Date(`${currYear}-${currMonth}-01`),
-          [Op.lte]: new Date(`${currYear}-${currMonth}-31`),
+          [Op.between]: [
+            new Date(`${currYear}-${currMonth}-01`),
+            new Date(`${currYear}-${currMonth}-31`),
+          ],
         },
       },
     });
 
     if (dataCount >= 5) {
       return res.status(400).json({
-        message: 'Você já atingiu o limite de 5 partidas em um mês',
+        message: 'Você já atingiu o limite de 5 partidas para o mês informado',
       });
     }
 
@@ -223,7 +226,7 @@ class MatchController {
 
     if (!dataFindOneClub) {
       return res.status(404).json({
-        error: 'Você ainda não configurou o seu clube',
+        message: 'Você ainda não configurou o seu clube',
       });
     }
 
@@ -236,14 +239,35 @@ class MatchController {
     });
 
     if (validate.error) {
-      return res.status(400).json({ error: validate.error });
+      return res.status(400).json({ message: validate.error });
+    }
+
+    const currDate = body_request.date.split('-');
+    const currYear = currDate[0];
+    const currMonth = currDate[1];
+    const dataCount = await Match.count({
+      where: {
+        club_id: dataFindOneClub.id,
+        date: {
+          [Op.between]: [
+            new Date(`${currYear}-${currMonth}-01`),
+            new Date(`${currYear}-${currMonth}-31`),
+          ],
+        },
+      },
+    });
+
+    if (dataCount >= 5) {
+      return res.status(400).json({
+        message: 'Você já atingiu o limite de 5 partidas para o mês informado',
+      });
     }
 
     const find = await Match.findByPk(body_request.id);
 
     if (!find) {
       return res.status(400).json({
-        error: 'Partida não encontrada',
+        message: 'Partida não encontrada',
       });
     }
 
@@ -253,7 +277,7 @@ class MatchController {
       body_request.timer_1 !== find.timer_1
     ) {
       return res.status(400).json({
-        error: 'Este cronômetro já foi iniciado.',
+        message: 'Este cronômetro já foi iniciado.',
       });
     }
 
@@ -263,15 +287,16 @@ class MatchController {
       body_request.timer_2 !== find.timer_2
     ) {
       return res.status(400).json({
-        error: 'Este cronômetro já foi iniciado.',
+        message: 'Este cronômetro já foi iniciado.',
       });
     }
 
-    await find.update(body_request);
+    const updated = await find.update(body_request);
 
     return res.json({
       success: true,
       message: 'Partida atualizada com sucesso',
+      data: updated,
     });
   }
 
