@@ -32,28 +32,6 @@ class MatchEventController {
       return res.status(400).json({ message: validate.error });
     }
 
-    if (body_request.type !== 'GOL SOFRIDO') {
-      const event = await MatchEvent.findOne({
-        raw: true,
-        nest: true,
-        where: {
-          [Op.and]: {
-            match_id: body_request.match_id,
-            user_id: body_request.user_id,
-            type: {
-              [Op.in]: ['VITORIA', 'EMPATE', 'DERROTA'],
-            },
-          },
-        },
-      });
-
-      if (event) {
-        return res.status(400).json({
-          message: 'Não é possível inserir esse evento',
-        });
-      }
-    }
-
     let findEvent = null;
     if (body_request.event_id) {
       findEvent = await Event.findByPk(body_request.event_id);
