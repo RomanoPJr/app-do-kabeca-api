@@ -18,6 +18,7 @@ import EscalationController from './app/controllers/MatchEscalationController';
 import MonthlyPaymentController from './app/controllers/MonthlyPaymentController';
 import SuggestionEventController from './app/controllers/SuggestionEventController';
 import SuggestionStatuteController from './app/controllers/SuggestionStatuteController';
+import ReportController from './app/controllers/ReportController';
 
 const routes = new Router();
 routes.post('/sessions', SessionController.store);
@@ -128,5 +129,9 @@ routes.delete('/escalation/:id', authOrganizer, EscalationController.delete);
 routes.post('/match_event', authOrganizer, MatchEventController.store);
 // routes.put('/match', authOrganizer, MatchEventController.update);
 routes.delete('/match_event/:id', authOrganizer, MatchEventController.delete);
+
+routes.get('/report/artilharia', authOrganizer, ReportController.artilharia);
+routes.get('/report/jogadores', authOrganizer, ReportController.jogadores);
+routes.get('/report/financeiro', authOrganizer, ReportController.financeiro);
 
 export default routes;
