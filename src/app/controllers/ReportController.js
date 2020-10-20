@@ -143,6 +143,50 @@ class ReportController {
       data: results,
     });
   }
+
+  async aniversario(req, res) {
+    const conexao = new Sequelize(databaseConfig);
+    const { user_request } = req.body;
+    const { pageNumber, pageSize, dateStart, dateEnd } = req.query;
+
+    if (!dateStart || !dateEnd) {
+      return res.status(400).json({
+        error: 'Informe data de início e fim',
+      });
+    }
+
+    const monthStart = dateStart.split('-')[1];
+    const monthEnd = dateEnd.split('-')[1];
+
+    let query = `
+        select
+          users.name,
+          users.birth_date
+        from club_players cp
+        join users on users.id = cp.user_id
+        where cp.club_id = ${user_request.club_id}
+        and EXTRACT(month FROM users.birth_date) between '${monthStart}' and '${monthEnd}'
+        order by users.birth_date asc
+      `;
+
+    if (pageNumber && pageSize) {
+      query += `
+        offset ${(pageNumber - 1) * pageSize}
+        limit ${pageSize}
+      `;
+      const [results] = await conexao.query(query);
+      return res.json({
+        pageSize,
+        pageNumber,
+        pageTotal: Math.ceil(results.length / pageSize),
+        data: results,
+      });
+    }
+    const [results] = await conexao.query(query);
+    return res.json({
+      data: results,
+    });
+  }
 }
 
 export default new ReportController();

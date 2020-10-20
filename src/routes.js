@@ -133,5 +133,6 @@ routes.delete('/match_event/:id', authOrganizer, MatchEventController.delete);
 routes.get('/report/artilharia', authOrganizer, ReportController.artilharia);
 routes.get('/report/jogadores', authOrganizer, ReportController.jogadores);
 routes.get('/report/financeiro', authOrganizer, ReportController.financeiro);
+routes.get('/report/aniversario', authOrganizer, ReportController.aniversario);
 
 export default routes;
