@@ -161,7 +161,8 @@ class ReportController {
     let query = `
         select
           users.name,
-          users.birth_date
+          users.birth_date,
+          TO_CHAR(birth_date :: DATE, 'dd/mm') date
         from club_players cp
         join users on users.id = cp.user_id
         where cp.club_id = ${user_request.club_id}
