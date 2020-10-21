@@ -134,5 +134,10 @@ routes.get('/report/artilharia', authOrganizer, ReportController.artilharia);
 routes.get('/report/jogadores', authOrganizer, ReportController.jogadores);
 routes.get('/report/financeiro', authOrganizer, ReportController.financeiro);
 routes.get('/report/aniversario', authOrganizer, ReportController.aniversario);
+routes.get(
+  '/report/pontuacaoGeral',
+  authOrganizer,
+  ReportController.pontuacaoGeral
+);
 
 export default routes;
