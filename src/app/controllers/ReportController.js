@@ -31,6 +31,9 @@ class ReportController {
         order by qtd_gols desc
       `;
 
+    let responseCount = await conexao.query(query);
+    responseCount = responseCount[0].length;
+
     if (pageNumber && pageSize) {
       query += `
         offset ${(pageNumber - 1) * pageSize}
@@ -40,7 +43,7 @@ class ReportController {
       return res.json({
         pageSize,
         pageNumber,
-        pageTotal: Math.ceil(results.length / pageSize),
+        pageTotal: Math.ceil(responseCount / pageSize),
         data: results,
       });
     }
@@ -84,16 +87,21 @@ class ReportController {
           name asc
       `;
 
+    let responseCount = await conexao.query(query);
+    responseCount = responseCount[0].length;
+
     if (pageNumber && pageSize) {
       query += `
         offset ${(pageNumber - 1) * pageSize}
         limit ${pageSize}
       `;
-      const [results] = await conexao.query(query);
+
+      const response = await conexao.query(query);
+      const [results] = response;
       return res.json({
         pageSize,
         pageNumber,
-        pageTotal: Math.ceil(results.length / pageSize),
+        pageTotal: Math.ceil(responseCount / pageSize),
         data: results,
       });
     }
@@ -125,6 +133,9 @@ class ReportController {
         and referent between '${dateStart}' and '${dateEnd}'
       `;
 
+    let responseCount = await conexao.query(query);
+    responseCount = responseCount[0].length;
+
     if (pageNumber && pageSize) {
       query += `
         offset ${(pageNumber - 1) * pageSize}
@@ -134,7 +145,7 @@ class ReportController {
       return res.json({
         pageSize,
         pageNumber,
-        pageTotal: Math.ceil(results.length / pageSize),
+        pageTotal: Math.ceil(responseCount / pageSize),
         data: results,
       });
     }
@@ -167,6 +178,9 @@ class ReportController {
         order by users.birth_date asc
       `;
 
+    let responseCount = await conexao.query(query);
+    responseCount = responseCount[0].length;
+
     if (pageNumber && pageSize) {
       query += `
         offset ${(pageNumber - 1) * pageSize}
@@ -177,7 +191,7 @@ class ReportController {
       return res.json({
         pageSize,
         pageNumber,
-        pageTotal: Math.ceil(results.length / pageSize),
+        pageTotal: Math.ceil(responseCount / pageSize),
         data: results,
       });
     }
@@ -199,137 +213,32 @@ class ReportController {
     }
 
     let query = `
-      SELECT user_id,
+      select
+        user_id,
         name,
-        POSITION,
-        COALESCE((
-          SELECT count(*)
-          FROM
-            (
-              SELECT user_id
-              FROM matches_escalations
-              JOIN matches ON matches.id = matches_escalations.match_id
-              WHERE matches.club_id = ${user_request.club_id}
-                AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-              GROUP BY user_id, match_id
-              ORDER BY user_id
-            ) AS table1
-          WHERE cp.user_id = table1.user_id
-          GROUP BY user_id
-        ),0) AS qtd_jogos,
-        COALESCE((
-          SELECT sum(me.value) AS total_pontos
-          FROM matches_events me
-          INNER JOIN matches ON matches.id = me.match_id
-          WHERE matches.club_id = ${user_request.club_id}
-            AND matches.score_type = 'RANKEADA'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-            AND cp.user_id = me.user_id
-          GROUP BY user_id
-        ),0) AS total_pontos,
-        COALESCE((
-          SELECT count(*)
-          FROM view_vencedores_por_partida
-          JOIN matches ON matches.id = view_vencedores_por_partida.id
-          JOIN (
-            SELECT DISTINCT ON (me2.match_id) *
-            FROM matches_escalations me2
-            WHERE cp.user_id = me2.user_id
-          ) AS me2 ON me2.match_id = view_vencedores_por_partida.id
-          WHERE matches.club_id = ${user_request.club_id}
-            AND vencedor = me2.team::text
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-          GROUP BY vencedor
-        ),0) AS vitorias,
-        COALESCE((
-          SELECT count(*)
-          FROM view_vencedores_por_partida
-          JOIN matches ON matches.id = view_vencedores_por_partida.id
-          JOIN (
-            SELECT DISTINCT ON (me2.match_id) *
-            FROM matches_escalations me2
-            WHERE cp.user_id = me2.user_id
-          ) AS me2 ON me2.match_id = view_vencedores_por_partida.id
-          WHERE matches.club_id = ${user_request.club_id}
-            AND vencedor = 'EMPATE'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-          GROUP BY vencedor
-        ),0) AS empates,
-        COALESCE((
-          SELECT count(*)
-          FROM view_vencedores_por_partida
-          JOIN matches ON matches.id = view_vencedores_por_partida.id
-          JOIN (
-            SELECT DISTINCT ON (me2.match_id) *
-            FROM matches_escalations me2
-            WHERE cp.user_id = me2.user_id
-          ) AS me2 ON me2.match_id = view_vencedores_por_partida.id
-          WHERE matches.club_id = ${user_request.club_id}
-            AND vencedor != me2.team::text
-            AND vencedor != 'EMPATE'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-          GROUP BY vencedor
-        ),0) AS derrotas,
-        COALESCE((
-          SELECT count(*)
-          FROM matches_events me2
-          JOIN matches ON me2.match_id = matches.id
-          WHERE cp.user_id = me2.user_id
-            AND me2.type = 'EVENTO 1'
-            AND matches.score_type = 'RANKEADA'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-            AND cp.club_id = ${user_request.club_id}
-          GROUP BY user_id
-        ),0) AS evento_1,
-        COALESCE((
-          SELECT count(*)
-          FROM matches_events me2
-          JOIN matches ON me2.match_id = matches.id
-          WHERE cp.user_id = me2.user_id
-            AND me2.type = 'EVENTO 2'
-            AND matches.score_type = 'RANKEADA'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-            AND cp.club_id = ${user_request.club_id}
-          GROUP BY user_id
-        ),0) AS evento_2,
-        COALESCE((
-          SELECT count(*)
-          FROM matches_events me2
-          JOIN matches ON me2.match_id = matches.id
-          WHERE cp.user_id = me2.user_id
-            AND me2.type = 'EVENTO 3'
-            AND matches.score_type = 'RANKEADA'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-            AND cp.club_id = ${user_request.club_id}
-          GROUP BY user_id
-        ),0) AS evento_3,
-        COALESCE((
-          SELECT count(*)
-          FROM matches_events me2
-          JOIN matches ON me2.match_id = matches.id
-          WHERE cp.user_id = me2.user_id
-            AND me2.type = 'EVENTO 4'
-            AND matches.score_type = 'RANKEADA'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-            AND cp.club_id = ${user_request.club_id}
-          GROUP BY user_id
-        ),0) AS evento_4,
-        COALESCE((
-          SELECT count(*)
-          FROM matches_events me2
-          JOIN matches ON me2.match_id = matches.id
-          WHERE cp.user_id = me2.user_id
-            AND me2.type = 'EVENTO 5'
-            AND matches.score_type = 'RANKEADA'
-            AND matches.date BETWEEN '${dateStart}' and '${dateEnd}'
-            AND cp.club_id = ${user_request.club_id}
-          GROUP BY user_id
-        ),0) AS evento_5
-      FROM club_players cp
-      INNER JOIN users ON cp.user_id = users.id
-      WHERE cp.club_id = ${user_request.club_id}
-      ORDER BY total_pontos DESC
+        position,
+        coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${user_request.club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
+        coalesce(( select sum(me.value) as total_pontos from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${user_request.club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0) as total_pontos,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by vencedor ), 0) as vitorias,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by vencedor ), 0) as empates,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by vencedor ), 0) as derrotas,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 1' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_1,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 2' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_2,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 3' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_3,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 4' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_4,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 5' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_5
+      from
+        club_players cp
+      inner join users on
+        cp.user_id = users.id
+      where
+        cp.club_id = ${user_request.club_id}
+      order by
+        total_pontos desc
     `;
+
+    let responseCount = await conexao.query(query);
+    responseCount = responseCount[0].length;
 
     if (pageNumber && pageSize) {
       query += `
@@ -340,7 +249,66 @@ class ReportController {
       return res.json({
         pageSize,
         pageNumber,
-        pageTotal: Math.ceil(results.length / pageSize),
+        pageTotal: Math.ceil(responseCount / pageSize),
+        data: results,
+      });
+    }
+    const [results] = await conexao.query(query);
+    return res.json({
+      data: results,
+    });
+  }
+
+  async pontuacaoGeralPorPontuacao(req, res) {
+    const conexao = new Sequelize(databaseConfig);
+    const { user_request } = req.body;
+    const { pageNumber, pageSize, dateStart, dateEnd, position } = req.query;
+
+    if (!dateStart || !dateEnd) {
+      return res.status(400).json({
+        error: 'Informe data de início e fim',
+      });
+    }
+
+    let query = `
+      select
+        user_id,
+        name,
+        position,
+        coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${user_request.club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
+        coalesce(( select sum(me.value) as total_pontos from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${user_request.club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0) as total_pontos,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by vencedor ), 0) as vitorias,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by vencedor ), 0) as empates,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by vencedor ), 0) as derrotas,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 1' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_1,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 2' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_2,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 3' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_3,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 4' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_4,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 5' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_5
+      from
+        club_players cp
+      inner join users on
+        cp.user_id = users.id
+      where
+        cp.club_id = ${user_request.club_id}
+        and cp.position = '${position}'
+      order by
+        total_pontos desc
+    `;
+
+    let responseCount = await conexao.query(query);
+    responseCount = responseCount[0].length;
+
+    if (pageNumber && pageSize) {
+      query += `
+        offset ${(pageNumber - 1) * pageSize}
+        limit ${pageSize}
+      `;
+      const [results] = await conexao.query(query);
+      return res.json({
+        pageSize,
+        pageNumber,
+        pageTotal: Math.ceil(responseCount / pageSize),
         data: results,
       });
     }

@@ -139,5 +139,10 @@ routes.get(
   authOrganizer,
   ReportController.pontuacaoGeral
 );
+routes.get(
+  '/report/pontuacaoGeralPosicao',
+  authOrganizer,
+  ReportController.pontuacaoGeralPorPontuacao
+);
 
 export default routes;
