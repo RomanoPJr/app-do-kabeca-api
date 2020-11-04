@@ -218,7 +218,25 @@ class ReportController {
         name,
         position,
         coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${user_request.club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
-        coalesce(( select sum(me.value) as total_pontos from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${user_request.club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0) as total_pontos,
+        coalesce((
+          select
+            coalesce(sum(me.value), 0) +
+            (coalesce((
+              select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id
+            ),0) * (
+              select value / 100 from events where club_id = ${user_request.club_id} and description = 'VITORIA'
+            )) +
+            (coalesce((
+              select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id
+            ),0) * (
+              select value / 100 from events where club_id = ${user_request.club_id} and description = 'EMPATE'
+            )) +
+            (coalesce((
+              select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id
+            ),0) * (
+              select value / 100 from events where club_id = ${user_request.club_id} and description = 'DERROTA'
+            ))
+          from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${user_request.club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0) as total_pontos,
         coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as vitorias,
         coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as empates,
         coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as derrotas,
