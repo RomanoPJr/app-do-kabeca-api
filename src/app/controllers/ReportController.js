@@ -251,6 +251,11 @@ class ReportController {
         limit ${pageSize}
       `;
       const [results] = await conexao.query(query);
+
+      results.map(x => {
+        x.total_pontos = x.total_pontos ? x.total_pontos.tofixed(2) : '0.00';
+      });
+
       return res.json({
         pageSize,
         pageNumber,
@@ -259,6 +264,11 @@ class ReportController {
       });
     }
     const [results] = await conexao.query(query);
+
+    results.map(x => {
+      x.total_pontos = x.total_pontos ? x.total_pontos.tofixed(2) : '0.00';
+    });
+
     return res.json({
       data: results,
     });
@@ -315,6 +325,11 @@ class ReportController {
         limit ${pageSize}
       `;
       const [results] = await conexao.query(query);
+
+      results.map(x => {
+        x.total_pontos = x.total_pontos ? x.total_pontos.tofixed(2) : '0.00';
+      });
+
       return res.json({
         pageSize,
         pageNumber,
@@ -323,6 +338,10 @@ class ReportController {
       });
     }
     const [results] = await conexao.query(query);
+
+    results.map(x => {
+      x.total_pontos = x.total_pontos ? x.total_pontos.tofixed(2) : '0.00';
+    });
     return res.json({
       data: results,
     });
