@@ -255,7 +255,7 @@ class ReportController {
       results.map(x => {
         x.total_pontos =
           x.total_pontos && x.total_pontos !== null
-            ? x.total_pontos.tofixed(2)
+            ? parseInt(x.total_pontos, 10).tofixed(2)
             : '0.00';
       });
 
@@ -271,7 +271,7 @@ class ReportController {
     results.map(x => {
       x.total_pontos =
         x.total_pontos && x.total_pontos !== null
-          ? x.total_pontos.tofixed(2)
+          ? parseInt(x.total_pontos, 10).tofixed(2)
           : '0.00';
     });
 
@@ -335,7 +335,7 @@ class ReportController {
       results.map(x => {
         x.total_pontos =
           x.total_pontos && x.total_pontos !== null
-            ? x.total_pontos.tofixed(2)
+            ? parseInt(x.total_pontos, 10).tofixed(2)
             : '0.00';
       });
 
@@ -351,9 +351,10 @@ class ReportController {
     results.map(x => {
       x.total_pontos =
         x.total_pontos && x.total_pontos !== null
-          ? x.total_pontos.tofixed(2)
+          ? parseInt(x.total_pontos, 10).tofixed(2)
           : '0.00';
     });
+
     return res.json({
       data: results,
     });
