@@ -252,12 +252,10 @@ class ReportController {
       `;
       const [results] = await conexao.query(query);
 
-      console.log(results);
       results.map(x => {
-        console.log(x, '--------------------------------------');
         x.total_pontos =
           x.total_pontos && x.total_pontos !== null
-            ? parseFloat(x.total_pontos, 10).tofixed(2)
+            ? parseFloat(x.total_pontos, 10).toFixed(2)
             : '0.00';
       });
 
@@ -272,7 +270,7 @@ class ReportController {
     results.map(x => {
       x.total_pontos =
         x.total_pontos && x.total_pontos !== null
-          ? parseFloat(x.total_pontos, 10).tofixed(2)
+          ? parseFloat(x.total_pontos, 10).toFixed(2)
           : '0.00';
     });
 
@@ -336,7 +334,7 @@ class ReportController {
       results.map(x => {
         x.total_pontos =
           x.total_pontos && x.total_pontos !== null
-            ? parseFloat(x.total_pontos, 10).tofixed(2)
+            ? parseFloat(x.total_pontos, 10).toFixed(2)
             : '0.00';
       });
 
@@ -352,7 +350,7 @@ class ReportController {
     results.map(x => {
       x.total_pontos =
         x.total_pontos && x.total_pontos !== null
-          ? parseFloat(x.total_pontos, 10).tofixed(2)
+          ? parseFloat(x.total_pontos, 10).toFixed(2)
           : '0.00';
     });
 
