@@ -252,7 +252,9 @@ class ReportController {
       `;
       const [results] = await conexao.query(query);
 
+      console.log(results);
       results.map(x => {
+        console.log(x, '--------------------------------------');
         x.total_pontos =
           x.total_pontos && x.total_pontos !== null
             ? parseFloat(x.total_pontos, 10).tofixed(2)
@@ -267,9 +269,7 @@ class ReportController {
       });
     }
     const [results] = await conexao.query(query);
-    console.log(results);
     results.map(x => {
-      console.log(x, '--------------------------------------');
       x.total_pontos =
         x.total_pontos && x.total_pontos !== null
           ? parseFloat(x.total_pontos, 10).tofixed(2)
