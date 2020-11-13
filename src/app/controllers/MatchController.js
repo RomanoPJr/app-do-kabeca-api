@@ -18,7 +18,12 @@ class MatchController {
       });
     }
 
-    const { count, rows } = await Match.findAndCountAll({
+    const count = await Match.count({
+      where: { club_id: user_request.club_id },
+      group: ['date'],
+    });
+
+    const { rows } = await Match.findAndCountAll({
       where: { club_id: user_request.club_id },
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
@@ -30,7 +35,7 @@ class MatchController {
     return res.json({
       pageSize,
       pageNumber,
-      pageTotal: Math.ceil(count / pageSize),
+      pageTotal: Math.ceil(count.length / pageSize),
       data: rows,
     });
   }
