@@ -27,7 +27,7 @@ class MatchController {
       where: { club_id: user_request.club_id },
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
-      order: [['date', 'asc']],
+      order: [['date', 'desc']],
       attributes: ['date'],
       group: ['date'],
     });
