@@ -195,7 +195,7 @@ class ReportController {
         ],
       });
 
-      return debit.rows;
+      return debit.rows.toJSON();
     }
 
     const debit = await listDebit(dateStart, dateEnd, user_request)
