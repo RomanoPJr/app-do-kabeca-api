@@ -1,6 +1,8 @@
 import Sequelize from 'sequelize';
 import databaseConfig from '../../config/database';
-
+import User from '../models/User';
+import ClubPlayer from '../models/ClubPlayer';
+import MonthlyPayment from '../models/MonthlyPayment';
 class ReportController {
   async artilharia(req, res) {
     const conexao = new Sequelize(databaseConfig);
