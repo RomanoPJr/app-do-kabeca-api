@@ -200,9 +200,19 @@ class ReportController {
 
     const debit = await listDebit(dateStart, dateEnd, user_request)
 
+    const formatedDebit = debit.map(x => {
+      if (x.ClubPlayers) {
+        return {
+          ...x,
+          due_value: x.ClubPlayers[0].monthly_payment,
+          paid_value: '0.00'
+        }
+      }
+    })
+
     const [results] = await conexao.query(query);
     return res.json({
-      data: [...results, ...debit],
+      data: [...results, ...formatedDebit],
     });
   }
 
