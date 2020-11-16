@@ -149,11 +149,61 @@ class ReportController {
         data: results,
       });
     }
+
+    const debit = await listDebit(dateStart, dateEnd, user_request)
+
     const [results] = await conexao.query(query);
     return res.json({
-      data: results,
+      data: [...results, ...debit],
     });
   }
+
+  async listDebit(dateStart, dateEnd, user_request) {
+
+    const paid = await MonthlyPayment.findAndCountAll({
+      where: {
+        club_id: user_request.club_id,
+        referent: {
+          [Op.gte]: new Date(dateStart),
+          [Op.lte]: new Date(dateEnd),
+        },
+      },
+    });
+
+    const phones = paid.rows.map(payment => payment.phone);
+
+    const debit = await User.findAndCountAll({
+      order: [['name', 'asc']],
+      where: {
+        phone: {
+          [Op.notIn]: phones,
+        },
+      },
+      include: [
+        {
+          model: ClubPlayer,
+          attributes: [
+            'id',
+            'user_id',
+            'monthly_payment',
+            'created_at',
+            'position',
+          ],
+          where: {
+            club_id: {
+              [Op.eq]: user_request.club_id,
+            },
+            created_at: {
+              [Op.lte]: new Date(`${year}-${month}-31`),
+            },
+          },
+        },
+      ],
+    });
+
+    return debit.rows;
+  }
+
 
   async aniversario(req, res) {
     const conexao = new Sequelize(databaseConfig);
