@@ -150,7 +150,7 @@ class ReportController {
       });
     }
 
-    const debit = await listDebit(dateStart, dateEnd, user_request)
+    const debit = await this.listDebit(dateStart, dateEnd, user_request)
 
     const [results] = await conexao.query(query);
     return res.json({
