@@ -167,6 +167,8 @@ class ReportController {
       const phones = paid.rows.map(payment => payment.phone);
 
       const debit = await User.findAndCountAll({
+        raw: true,
+        nest: true,
         order: [['name', 'asc']],
         where: {
           phone: {
@@ -199,7 +201,7 @@ class ReportController {
     }
 
     const debit = await listDebit(dateStart, dateEnd, user_request)
-    console.log(debit)
+
     const formatedDebit = debit.map(x => {
       if (x.ClubPlayers) {
         return {
