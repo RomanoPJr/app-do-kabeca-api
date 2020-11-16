@@ -207,7 +207,7 @@ class ReportController {
       if (x.ClubPlayers) {
         return {
           ...x,
-          due_value: x.ClubPlayers[0].monthly_payment,
+          due_value: x.ClubPlayers.monthly_payment,
           paid_value: '0.00'
         }
       }
