@@ -202,7 +202,6 @@ class ReportController {
 
     const debit = await listDebit(dateStart, dateEnd, user_request)
 
-    console.log(debit)
     const formatedDebit = debit.map(x => {
       if (x.ClubPlayers) {
         return {
