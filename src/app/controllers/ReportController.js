@@ -1,4 +1,4 @@
-import Sequelize from 'sequelize';
+import Sequelize, { Op } from 'sequelize';
 import databaseConfig from '../../config/database';
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
