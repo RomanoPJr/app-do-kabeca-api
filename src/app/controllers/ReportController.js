@@ -188,7 +188,7 @@ class ReportController {
                 [Op.eq]: user_request.club_id,
               },
               created_at: {
-                [Op.lte]: new Date(`${year}-${month}-31`),
+                [Op.lte]: new Date(dateEnd),
               },
             },
           },
