@@ -3,6 +3,7 @@ import databaseConfig from '../../config/database';
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
+
 class ReportController {
   async artilharia(req, res) {
     const conexao = new Sequelize(databaseConfig);
@@ -153,7 +154,6 @@ class ReportController {
     }
 
     const listDebit = async (dateStart, dateEnd, user_request) => {
-
       const paid = await MonthlyPayment.findAndCountAll({
         where: {
           club_id: user_request.club_id,
@@ -197,27 +197,26 @@ class ReportController {
         ],
       });
 
-      return debit.rows
-    }
+      return debit.rows;
+    };
 
-    const debit = await listDebit(dateStart, dateEnd, user_request)
+    const debit = await listDebit(dateStart, dateEnd, user_request);
 
     const formatedDebit = debit.map(x => {
       if (x.ClubPlayers) {
         return {
           ...x,
           due_value: x.ClubPlayers.monthly_payment,
-          paid_value: '0.00'
-        }
+          paid_value: '0.00',
+        };
       }
-    })
+    });
 
     const [results] = await conexao.query(query);
     return res.json({
       data: [...results, ...formatedDebit],
     });
   }
-
 
   async aniversario(req, res) {
     const conexao = new Sequelize(databaseConfig);
@@ -230,6 +229,9 @@ class ReportController {
       });
     }
 
+    const monthStart = dateStart.split('-')[1];
+    const monthEnd = dateEnd.split('-')[1];
+
     let query = `
         select
           users.name,
@@ -238,7 +240,7 @@ class ReportController {
         from club_players cp
         join users on users.id = cp.user_id
         where cp.club_id = ${user_request.club_id}
-        and EXTRACT(month FROM users.birth_date) between '${dateStart}' and '${dateEnd}'
+        and EXTRACT(month FROM users.birth_date) between '${monthStart}' and '${monthEnd}'
         order by users.birth_date asc
       `;
 
