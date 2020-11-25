@@ -91,19 +91,19 @@ class SessionController {
           error: 'O seu período de 30 dias de avaliação chegou ao fim.',
         });
       }
-    } else if (user.type === 'PLAYER') {
-      const clubs = await ClubPlayer.findAll({
-        where: { user_id: user.id },
-        attributes: ['club_id', 'user_id', 'position', 'createdAt'],
-        include: [
-          {
-            model: Club,
-          },
-        ],
-      });
-
-      userDataResponse.clubs = clubs;
     }
+
+    const clubs = await ClubPlayer.findAll({
+      where: { user_id: user.id },
+      attributes: ['club_id', 'user_id', 'position', 'createdAt'],
+      include: [
+        {
+          model: Club,
+        },
+      ],
+    });
+
+    userDataResponse.clubs = clubs;
 
     return res.json({
       user: userDataResponse,
