@@ -7,8 +7,21 @@ import MonthlyPayment from '../models/MonthlyPayment';
 class ReportController {
   async artilharia(req, res) {
     const conexao = new Sequelize(databaseConfig);
-    const { user_request } = req.body;
-    const { pageNumber, pageSize, dateStart, dateEnd } = req.query;
+    const {
+      headers,
+      body: { user_request },
+      query: { pageNumber, pageSize, dateStart, dateEnd },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
+
+    console.log(club_id);
 
     if (!dateStart || !dateEnd) {
       return res.status(400).json({
@@ -17,22 +30,22 @@ class ReportController {
     }
 
     let query = `
-        select
-          users.name,
-          user_id,
-          matches_events.club_id,
-          matches_events.type,
-          count(*) as qtd_gols
-        from matches_events
-        join users on matches_events.user_id = users.id
-        left join matches on matches_events.match_id = matches.id
-        where matches_events.type = 'GOL'
-        and matches_events.club_id = ${user_request.club_id}
-        and matches.score_type = 'RANKEADA'
-        and matches.date between '${dateStart}' and '${dateEnd}'
-        group by user_id, matches_events.club_id, matches_events.type, users.name
-        order by qtd_gols desc
-      `;
+      select
+        users.name,
+        user_id,
+        matches_events.club_id,
+        matches_events.type,
+        count(*) as qtd_gols
+      from matches_events
+      join users on matches_events.user_id = users.id
+      left join matches on matches_events.match_id = matches.id
+      where matches_events.type = 'GOL'
+      and matches_events.club_id = ${club_id}
+      and matches.score_type = 'RANKEADA'
+      and matches.date between '${dateStart}' and '${dateEnd}'
+      group by user_id, matches_events.club_id, matches_events.type, users.name
+      order by qtd_gols desc
+    `;
 
     let responseCount = await conexao.query(query);
     responseCount = responseCount[0].length;
@@ -58,8 +71,19 @@ class ReportController {
 
   async jogadores(req, res) {
     const conexao = new Sequelize(databaseConfig);
-    const { user_request } = req.body;
-    const { pageNumber, pageSize } = req.query;
+    const {
+      headers,
+      query: { pageNumber, pageSize },
+      body: { user_request },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     let query = `
         select
@@ -85,7 +109,7 @@ class ReportController {
         inner join users on
           club_players.user_id = users.id
         where
-          club_players.club_id = ${user_request.club_id}
+          club_players.club_id = ${club_id}
         order by
           name asc
       `;
@@ -116,8 +140,19 @@ class ReportController {
 
   async financeiro(req, res) {
     const conexao = new Sequelize(databaseConfig);
-    const { user_request } = req.body;
-    const { pageNumber, pageSize, dateStart, dateEnd } = req.query;
+    const {
+      headers,
+      query: { pageNumber, pageSize, dateStart, dateEnd },
+      body: { user_request },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     if (!dateStart || !dateEnd) {
       return res.status(400).json({
@@ -132,7 +167,7 @@ class ReportController {
           paid_value
         from
           monthly_payments mp
-        where club_id = ${user_request.club_id}
+        where club_id = ${club_id}
         and referent between '${dateStart}' and '${dateEnd}'
       `;
 
@@ -153,10 +188,10 @@ class ReportController {
       });
     }
 
-    const listDebit = async (dateStart, dateEnd, user_request) => {
+    const listDebit = async (dateStart, dateEnd, club_id) => {
       const paid = await MonthlyPayment.findAndCountAll({
         where: {
-          club_id: user_request.club_id,
+          club_id,
           referent: {
             [Op.gte]: new Date(dateStart),
             [Op.lte]: new Date(dateEnd),
@@ -178,16 +213,10 @@ class ReportController {
         include: [
           {
             model: ClubPlayer,
-            attributes: [
-              'id',
-              'user_id',
-              'monthly_payment',
-              'created_at',
-              'position',
-            ],
+            attributes: ['id', 'user_id', 'monthly_payment', 'created_at', 'position'],
             where: {
               club_id: {
-                [Op.eq]: user_request.club_id,
+                [Op.eq]: club_id,
               },
               created_at: {
                 [Op.lte]: new Date(dateEnd),
@@ -200,7 +229,7 @@ class ReportController {
       return debit.rows;
     };
 
-    const debit = await listDebit(dateStart, dateEnd, user_request);
+    const debit = await listDebit(dateStart, dateEnd, club_id);
 
     const formatedDebit = debit.map(x => {
       if (x.ClubPlayers) {
@@ -220,8 +249,19 @@ class ReportController {
 
   async aniversario(req, res) {
     const conexao = new Sequelize(databaseConfig);
-    const { user_request } = req.body;
-    const { pageNumber, pageSize, dateStart, dateEnd } = req.query;
+    const {
+      headers,
+      query: { pageNumber, pageSize, dateStart, dateEnd },
+      body: { user_request },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     if (!dateStart || !dateEnd) {
       return res.status(400).json({
@@ -239,7 +279,7 @@ class ReportController {
           TO_CHAR(birth_date :: DATE, 'dd/mm') date
         from club_players cp
         join users on users.id = cp.user_id
-        where cp.club_id = ${user_request.club_id}
+        where cp.club_id = ${club_id}
         and EXTRACT(month FROM users.birth_date) between '${monthStart}' and '${monthEnd}'
         order by users.birth_date asc
       `;
@@ -269,8 +309,19 @@ class ReportController {
 
   async pontuacaoGeral(req, res) {
     const conexao = new Sequelize(databaseConfig);
-    const { user_request } = req.body;
-    const { pageNumber, pageSize, dateStart, dateEnd } = req.query;
+    const {
+      headers,
+      query: { pageNumber, pageSize, dateStart, dateEnd },
+      body: { user_request },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     if (!dateStart || !dateEnd) {
       return res.status(400).json({
@@ -283,27 +334,27 @@ class ReportController {
         user_id,
         name,
         position,
-        coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${user_request.club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
+        coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
         (
-            (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${user_request.club_id} and description = 'VITORIA'))
-          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${user_request.club_id} and description = 'EMPATE'))
-          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${user_request.club_id} and description = 'DERROTA'))
-          + (coalesce((select sum(me.value) from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${user_request.club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0))
+            (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${club_id} and description = 'VITORIA'))
+          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${club_id} and description = 'EMPATE'))
+          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${club_id} and description = 'DERROTA'))
+          + (coalesce((select sum(me.value) from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0))
         ) as total_pontos,
-        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as vitorias,
-        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as empates,
-        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as derrotas,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 1' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_1,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 2' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_2,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 3' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_3,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 4' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_4,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 5' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_5
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as vitorias,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as empates,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as derrotas,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 1' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_1,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 2' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_2,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 3' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_3,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 4' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_4,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 5' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_5
       from
         club_players cp
       inner join users on
         cp.user_id = users.id
       where
-        cp.club_id = ${user_request.club_id}
+        cp.club_id = ${club_id}
       order by
         total_pontos desc
     `;
@@ -319,10 +370,7 @@ class ReportController {
       const [results] = await conexao.query(query);
 
       results.map(x => {
-        x.total_pontos =
-          x.total_pontos && x.total_pontos !== null
-            ? parseFloat(x.total_pontos, 10).toFixed(2)
-            : '0.00';
+        x.total_pontos = x.total_pontos && x.total_pontos !== null ? parseFloat(x.total_pontos, 10).toFixed(2) : '0.00';
       });
 
       return res.json({
@@ -334,10 +382,7 @@ class ReportController {
     }
     const [results] = await conexao.query(query);
     results.map(x => {
-      x.total_pontos =
-        x.total_pontos && x.total_pontos !== null
-          ? parseFloat(x.total_pontos, 10).toFixed(2)
-          : '0.00';
+      x.total_pontos = x.total_pontos && x.total_pontos !== null ? parseFloat(x.total_pontos, 10).toFixed(2) : '0.00';
     });
 
     return res.json({
@@ -347,8 +392,19 @@ class ReportController {
 
   async pontuacaoGeralPorPontuacao(req, res) {
     const conexao = new Sequelize(databaseConfig);
-    const { user_request } = req.body;
-    const { pageNumber, pageSize, dateStart, dateEnd, position } = req.query;
+    const {
+      headers,
+      query: { pageNumber, pageSize, dateStart, dateEnd, position },
+      body: { user_request },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     if (!dateStart || !dateEnd) {
       return res.status(400).json({
@@ -361,27 +417,27 @@ class ReportController {
         user_id,
         name,
         position,
-        coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${user_request.club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
+        coalesce(( select count(*) from ( select user_id from matches_escalations join matches on matches.id = matches_escalations.match_id where matches.club_id = ${club_id} and matches.date between '${dateStart}' and '${dateEnd}' group by user_id, match_id order by user_id ) as table1 where cp.user_id = table1.user_id group by user_id ), 0) as qtd_jogos,
         (
-            (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${user_request.club_id} and description = 'VITORIA'))
-          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${user_request.club_id} and description = 'EMPATE'))
-          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${user_request.club_id} and description = 'DERROTA'))
-          + (coalesce((select sum(me.value) from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${user_request.club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0))
+            (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${club_id} and description = 'VITORIA'))
+          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${club_id} and description = 'EMPATE'))
+          + (coalesce((select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id),0) * (select value / 100 from events where club_id = ${club_id} and description = 'DERROTA'))
+          + (coalesce((select sum(me.value) from matches_events me inner join matches on matches.id = me.match_id where matches.club_id = ${club_id} and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.user_id = me.user_id group by user_id ), 0))
         ) as total_pontos,
-        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as vitorias,
-        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as empates,
-        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${user_request.club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as derrotas,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 1' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_1,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 2' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_2,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 3' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_3,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 4' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_4,
-        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 5' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${user_request.club_id} group by user_id ), 0) as evento_5
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = me2.team::text and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as vitorias,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor = 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as empates,
+        coalesce(( select count(*) from view_vencedores_por_partida join matches on matches.id = view_vencedores_por_partida.id join ( select distinct on (me2.match_id) * from matches_escalations me2 where cp.user_id = me2.user_id ) as me2 on me2.match_id = view_vencedores_por_partida.id where matches.club_id = ${club_id} and vencedor != me2.team::text and vencedor != 'EMPATE' and matches.date between '${dateStart}' and '${dateEnd}' group by user_id ), 0) as derrotas,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 1' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_1,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 2' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_2,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 3' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_3,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 4' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_4,
+        coalesce(( select count(*) from matches_events me2 join matches on me2.match_id = matches.id where cp.user_id = me2.user_id and me2.type = 'EVENTO 5' and matches.score_type = 'RANKEADA' and matches.date between '${dateStart}' and '${dateEnd}' and cp.club_id = ${club_id} group by user_id ), 0) as evento_5
       from
         club_players cp
       inner join users on
         cp.user_id = users.id
       where
-        cp.club_id = ${user_request.club_id}
+        cp.club_id = ${club_id}
         and cp.position = '${position}'
       order by
         total_pontos desc
@@ -398,10 +454,7 @@ class ReportController {
       const [results] = await conexao.query(query);
 
       results.map(x => {
-        x.total_pontos =
-          x.total_pontos && x.total_pontos !== null
-            ? parseFloat(x.total_pontos, 10).toFixed(2)
-            : '0.00';
+        x.total_pontos = x.total_pontos && x.total_pontos !== null ? parseFloat(x.total_pontos, 10).toFixed(2) : '0.00';
       });
 
       return res.json({
@@ -414,10 +467,7 @@ class ReportController {
     const [results] = await conexao.query(query);
 
     results.map(x => {
-      x.total_pontos =
-        x.total_pontos && x.total_pontos !== null
-          ? parseFloat(x.total_pontos, 10).toFixed(2)
-          : '0.00';
+      x.total_pontos = x.total_pontos && x.total_pontos !== null ? parseFloat(x.total_pontos, 10).toFixed(2) : '0.00';
     });
 
     return res.json({

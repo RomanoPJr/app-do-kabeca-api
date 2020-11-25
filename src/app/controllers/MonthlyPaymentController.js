@@ -6,12 +6,12 @@ import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
 
-const getTotalizers = async ({ user_request, year, month }) => {
+const getTotalizers = async ({ club_id, year, month }) => {
   const paid = await MonthlyPayment.findAndCountAll({
     raw: true,
     nest: true,
     where: {
-      club_id: user_request.club_id,
+      club_id,
       referent: {
         [Op.gte]: new Date(`${year}-${month}-01`),
         [Op.lte]: new Date(`${year}-${month}-31`),
@@ -49,7 +49,7 @@ const getTotalizers = async ({ user_request, year, month }) => {
         attributes: ['monthly_payment', 'position'],
         where: {
           club_id: {
-            [Op.eq]: user_request.club_id,
+            [Op.eq]: club_id,
           },
           created_at: {
             [Op.lte]: new Date(`${year}-${month}-31`),
@@ -60,10 +60,7 @@ const getTotalizers = async ({ user_request, year, month }) => {
   });
 
   const debitTotal = debit.rows.reduce((accumulator, debitCurrent) => {
-    const value =
-      debitCurrent.ClubPlayers.position === 'COLABORADOR'
-        ? 0
-        : Number(debitCurrent.ClubPlayers.monthly_payment);
+    const value = debitCurrent.ClubPlayers.position === 'COLABORADOR' ? 0 : Number(debitCurrent.ClubPlayers.monthly_payment);
     return accumulator + value;
   }, 0);
 
@@ -80,20 +77,26 @@ const getTotalizers = async ({ user_request, year, month }) => {
 
 class MonthlyPaymentController {
   async listPaid(req, res) {
-    const { user_request } = req.body;
     const {
-      pageSize = 10,
-      pageNumber = 0,
-      year = new Date().getFullYear(),
-      month = new Date().getMonth() + 1,
-    } = req.query;
+      headers,
+      body: { user_request },
+      query: { pageSize = 10, pageNumber = 0, year = new Date().getFullYear(), month = new Date().getMonth() + 1 },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     const paid = await MonthlyPayment.findAndCountAll({
       limit: pageSize,
       order: [['name', 'asc']],
       offset: (pageNumber - 1) * pageSize,
       where: {
-        club_id: user_request.club_id,
+        club_id,
         referent: {
           [Op.gte]: new Date(`${year}-${month}-01`),
           [Op.lte]: new Date(`${year}-${month}-31`),
@@ -101,7 +104,7 @@ class MonthlyPaymentController {
       },
     });
 
-    const totalizers = await getTotalizers({ user_request, year, month });
+    const totalizers = await getTotalizers({ club_id, year, month });
 
     return res.json({
       pageSize,
@@ -113,17 +116,23 @@ class MonthlyPaymentController {
   }
 
   async listDebit(req, res) {
-    const { user_request } = req.body;
     const {
-      pageSize = 10,
-      pageNumber = 0,
-      year = new Date().getFullYear(),
-      month = new Date().getMonth() + 1,
-    } = req.query;
+      headers,
+      body: { user_request },
+      query: { pageSize = 10, pageNumber = 0, year = new Date().getFullYear(), month = new Date().getMonth() + 1 },
+    } = req;
+
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
 
     const paid = await MonthlyPayment.findAndCountAll({
       where: {
-        club_id: user_request.club_id,
+        club_id,
         referent: {
           [Op.gte]: new Date(`${year}-${month}-01`),
           [Op.lte]: new Date(`${year}-${month}-31`),
@@ -145,16 +154,10 @@ class MonthlyPaymentController {
       include: [
         {
           model: ClubPlayer,
-          attributes: [
-            'id',
-            'user_id',
-            'monthly_payment',
-            'created_at',
-            'position',
-          ],
+          attributes: ['id', 'user_id', 'monthly_payment', 'created_at', 'position'],
           where: {
             club_id: {
-              [Op.eq]: user_request.club_id,
+              [Op.eq]: club_id,
             },
             created_at: {
               [Op.lte]: new Date(`${year}-${month}-31`),
@@ -164,7 +167,7 @@ class MonthlyPaymentController {
       ],
     });
 
-    const totalizers = await getTotalizers({ user_request, year, month });
+    const totalizers = await getTotalizers({ club_id, year, month });
 
     return res.json({
       pageSize,
@@ -177,24 +180,12 @@ class MonthlyPaymentController {
 
   async index(req, res) {
     const { user_request } = req.body;
-    const {
-      pageSize = 10,
-      pageNumber = 1,
-      year = new Date().getFullYear(),
-      month = new Date().getMonth() + 1,
-    } = req.query;
+    const { pageSize = 10, pageNumber = 1, year = new Date().getFullYear(), month = new Date().getMonth() + 1 } = req.query;
 
     const { count, rows } = await ClubPlayer.findAndCountAll({
       limit: pageSize,
       offset: (pageNumber - 1) * pageSize,
-      attributes: [
-        'id',
-        'position',
-        'user_id',
-        'invite',
-        'monthly_payment',
-        'created_at',
-      ],
+      attributes: ['id', 'position', 'user_id', 'invite', 'monthly_payment', 'created_at'],
       where: {
         club_id: user_request.club_id,
         created_at: {
@@ -263,12 +254,8 @@ class MonthlyPaymentController {
       });
     }
 
-    const year = body_request.year
-      ? body_request.year
-      : new Date().getFullYear();
-    const month = body_request.month
-      ? body_request.month
-      : new Date().getMonth() + 1;
+    const year = body_request.year ? body_request.year : new Date().getFullYear();
+    const month = body_request.month ? body_request.month : new Date().getMonth() + 1;
 
     const payment = await MonthlyPayment.create({
       due_value: body_request.due_value,
@@ -346,10 +333,7 @@ class MonthlyPaymentController {
 
   async update(req, res) {
     const body_request = req.body;
-    const {
-      year = new Date().getFullYear(),
-      month = new Date().getMonth() + 1,
-    } = req.query;
+    const { year = new Date().getFullYear(), month = new Date().getMonth() + 1 } = req.query;
 
     const schema = Yup.object().shape({
       id: Yup.number().required('Nenhum Pagamento Informado'),

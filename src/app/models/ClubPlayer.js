@@ -9,13 +9,7 @@ class ClubPlayer extends Model {
         invite: Sequelize.ENUM('ACEITO', 'AGUARDANDO', 'NEGADO', 'BLOQUEADO'),
         monthly_payment: Sequelize.DECIMAL,
         created_at: Sequelize.DATE,
-        position: Sequelize.ENUM(
-          'GOLEIRO',
-          'DEFESA',
-          'MEIO',
-          'ATAQUE',
-          'COLABORADOR'
-        ),
+        position: Sequelize.ENUM('GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'),
       },
       {
         sequelize,
@@ -29,6 +23,10 @@ class ClubPlayer extends Model {
     this.belongsTo(models.User, { foreignKey: 'user_id' });
     this.hasMany(models.MatchInviteConfirmation, {
       foreignKey: 'club_player_id',
+    });
+    this.hasMany(models.Club, {
+      foreignKey: 'id',
+      sourceKey: 'club_id',
     });
   }
 }

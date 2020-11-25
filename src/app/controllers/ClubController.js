@@ -8,11 +8,19 @@ import User from '../models/User';
 
 class ClubController {
   async index(req, res) {
-    const { body } = req;
+    const { body, headers } = req;
+
+    let findOneWhere = {};
+
+    if (headers.club_id) {
+      findOneWhere = { id: headers.club_id };
+    } else {
+      findOneWhere = { user_id: body.user_request.id };
+    }
 
     const findOneData = await Club.findOne({
       raw: true,
-      where: { user_id: body.user_request.id },
+      where: findOneWhere,
     });
 
     if (!findOneData) {
@@ -37,27 +45,12 @@ class ClubController {
       (accumulator, current) => {
         return {
           total_associados: accumulator.total_associados + 1,
-          total_goleiros:
-            accumulator.total_goleiros +
-            (current.position === 'GOLEIRO' ? 1 : 0),
-          total_colaboradores:
-            accumulator.total_colaboradores +
-            (current.position === 'COLABORADOR' ? 1 : 0),
-          total_pagantes:
-            accumulator.total_pagantes +
-            (Number(current.monthly_payment) > 0 ? 1 : 0),
-          total_nao_pagantes:
-            accumulator.total_nao_pagantes +
-            (Number(current.monthly_payment) === 0 || !current.monthly_payment
-              ? 1
-              : 0),
-          average_age:
-            accumulator.average_age +
-            (current.User.birth_date
-              ? differenceInYears(Date.now(), new Date(current.User.birth_date))
-              : 0),
-          total_age_informed:
-            accumulator.total_age_informed + (current.User.birth_date ? 1 : 0),
+          total_goleiros: accumulator.total_goleiros + (current.position === 'GOLEIRO' ? 1 : 0),
+          total_colaboradores: accumulator.total_colaboradores + (current.position === 'COLABORADOR' ? 1 : 0),
+          total_pagantes: accumulator.total_pagantes + (Number(current.monthly_payment) > 0 ? 1 : 0),
+          total_nao_pagantes: accumulator.total_nao_pagantes + (Number(current.monthly_payment) === 0 || !current.monthly_payment ? 1 : 0),
+          average_age: accumulator.average_age + (current.User.birth_date ? differenceInYears(Date.now(), new Date(current.User.birth_date)) : 0),
+          total_age_informed: accumulator.total_age_informed + (current.User.birth_date ? 1 : 0),
         };
       },
       {
@@ -95,18 +88,7 @@ class ClubController {
       logo_url: Yup.string(),
       day: Yup.string()
         .required('Email é obrigatório')
-        .oneOf(
-          [
-            'SEGUNDA-FEIRA',
-            'TERÇA-FEIRA',
-            'QUARTA-FEIRA',
-            'QUINTA-FEIRA',
-            'SEXTA-FEIRA',
-            'SÁBADO',
-            'DOMINGO',
-          ],
-          'Dia é inválido'
-        ),
+        .oneOf(['SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO', 'DOMINGO'], 'Dia é inválido'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -163,18 +145,7 @@ class ClubController {
         .oneOf(['ALL', 'INDIVIDUAL'], 'Tipo de Visualização é inválido'),
       day: Yup.string()
         .required('Dia é obrigatório')
-        .oneOf(
-          [
-            'SEGUNDA-FEIRA',
-            'TERÇA-FEIRA',
-            'QUARTA-FEIRA',
-            'QUINTA-FEIRA',
-            'SEXTA-FEIRA',
-            'SÁBADO',
-            'DOMINGO',
-          ],
-          'Dia é inválido'
-        ),
+        .oneOf(['SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO', 'DOMINGO'], 'Dia é inválido'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {

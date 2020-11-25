@@ -3,10 +3,21 @@ import Statute from '../models/Statute';
 
 class StatuteController {
   async index(req, res) {
-    const { user_request } = req.body;
+    const {
+      headers,
+      body: { user_request },
+    } = req;
+
+    let findOneWhere = {};
+
+    if (headers.club_id) {
+      findOneWhere = { club_id: headers.club_id };
+    } else {
+      findOneWhere = { club_id: user_request.club_id };
+    }
 
     const findOne = await Statute.findOne({
-      where: { club_id: user_request.club_id },
+      where: findOneWhere,
     });
 
     return res.json(findOne);

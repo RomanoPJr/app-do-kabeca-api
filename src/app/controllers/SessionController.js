@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import decode from '../../utils/token';
 import authConfig from '../../config/auth';
+import ClubPlayer from '../models/ClubPlayer';
+import Club from '../models/Club';
 
 class SessionController {
   async index(req, res) {
@@ -14,14 +16,33 @@ class SessionController {
     }
 
     const user = await User.findByPk(decodedToken.id, {
-      attributes: ['name', 'type', 'status'],
+      attributes: ['id', 'name', 'type', 'status'],
     });
 
     if (!user) {
       return res.status(401).json({ error: 'Usuário não encontrado' });
     }
 
-    return res.json(user);
+    const userDataResponse = {
+      name: user.name,
+      type: user.type,
+    };
+
+    if (user.type === 'PLAYER') {
+      const clubs = await ClubPlayer.findAll({
+        where: { user_id: user.id },
+        attributes: ['club_id', 'user_id', 'position', 'createdAt'],
+        include: [
+          {
+            model: Club,
+          },
+        ],
+      });
+
+      userDataResponse.clubs = clubs;
+    }
+
+    return res.json(userDataResponse);
   }
 
   async store(req, res) {
@@ -44,14 +65,7 @@ class SessionController {
 
     const user = await User.findOne({
       where: { email: body.email },
-      attributes: [
-        'id',
-        'name',
-        'status',
-        'password_hash',
-        'type',
-        'createdAt',
-      ],
+      attributes: ['id', 'name', 'status', 'password_hash', 'type', 'createdAt'],
     });
 
     if (!user) {
@@ -61,6 +75,11 @@ class SessionController {
     if (!(await user.checkPassword(body.password))) {
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
+
+    const userDataResponse = {
+      name: user.name,
+      type: user.type,
+    };
 
     if (user.type === 'ORGANIZER' && user.status === 'TESTE') {
       const date1 = new Date(user.createdAt);
@@ -72,13 +91,22 @@ class SessionController {
           error: 'O seu período de 30 dias de avaliação chegou ao fim.',
         });
       }
+    } else if (user.type === 'PLAYER') {
+      const clubs = await ClubPlayer.findAll({
+        where: { user_id: user.id },
+        attributes: ['club_id', 'user_id', 'position', 'createdAt'],
+        include: [
+          {
+            model: Club,
+          },
+        ],
+      });
+
+      userDataResponse.clubs = clubs;
     }
 
     return res.json({
-      user: {
-        name: user.name,
-        type: user.type,
-      },
+      user: userDataResponse,
       token: jwt.sign({ id: user.id }, authConfig.secret, {
         expiresIn: authConfig.expiresin,
       }),
@@ -89,9 +117,7 @@ class SessionController {
     const { user_request, ...body } = req.body;
 
     if (!user_request || user_request.type !== 'ADMIN') {
-      return res
-        .status(401)
-        .json({ error: 'Você não possui acesso a esta funcionalidade' });
+      return res.status(401).json({ error: 'Você não possui acesso a esta funcionalidade' });
     }
 
     const schema = Yup.object().shape({
@@ -108,14 +134,7 @@ class SessionController {
 
     const user = await User.findOne({
       where: { id: body.user_id },
-      attributes: [
-        'id',
-        'name',
-        'status',
-        'password_hash',
-        'type',
-        'createdAt',
-      ],
+      attributes: ['id', 'name', 'status', 'password_hash', 'type', 'createdAt'],
     });
 
     if (!user) {

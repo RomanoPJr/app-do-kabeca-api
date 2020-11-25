@@ -1,6 +1,5 @@
 import * as Yup from 'yup';
 import { Op } from 'sequelize';
-import { format } from 'date-fns';
 import Club from '../models/Club';
 import User from '../models/User';
 import Match from '../models/Match';
@@ -9,22 +8,27 @@ import MatchEvent from '../models/MatchEvent';
 
 class MatchController {
   async index(req, res) {
-    const { pageSize = 10, pageNumber = 1 } = req.query;
-    const { user_request } = req.body;
+    const {
+      headers,
+      body: { user_request },
+      query: { pageSize = 10, pageNumber = 1 },
+    } = req;
 
-    if (!user_request.club_id) {
-      return res.status(404).json({
-        error: 'Você ainda não configurou o seu clube',
-      });
+    let findOneWhere = {};
+
+    if (headers.club_id) {
+      findOneWhere = { club_id: headers.club_id };
+    } else {
+      findOneWhere = { club_id: user_request.club_id };
     }
 
     const count = await Match.count({
-      where: { club_id: user_request.club_id },
+      where: findOneWhere,
       group: ['date'],
     });
 
     const { rows } = await Match.findAndCountAll({
-      where: { club_id: user_request.club_id },
+      where: findOneWhere,
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       order: [['date', 'desc']],
@@ -41,17 +45,28 @@ class MatchController {
   }
 
   async listByDate(req, res) {
-    const { date } = req.query;
-    const { user_request } = req.body;
+    const {
+      headers,
+      body: { user_request },
+      query: { date },
+    } = req;
 
-    if (!user_request.club_id) {
+    let club_id = null;
+
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
+
+    if (!club_id) {
       return res.status(404).json({
         error: 'Você ainda não configurou o seu clube',
       });
     }
 
     const { rows } = await Match.findAndCountAll({
-      where: { club_id: user_request.club_id, date },
+      where: { club_id, date },
       order: [['id', 'asc']],
     });
 
@@ -61,14 +76,17 @@ class MatchController {
   }
 
   async findOne(req, res) {
-    const { user_request } = req.body;
+    const { headers, user_request } = req;
 
-    const dataFindOneClub = await Club.findOne({
-      where: { user_id: user_request.id },
-      attributes: ['id'],
-    });
+    let club_id = null;
 
-    if (!dataFindOneClub) {
+    if (headers.club_id) {
+      club_id = headers.club_id;
+    } else {
+      club_id = user_request.club_id;
+    }
+
+    if (!club_id) {
       return res.status(404).json({
         error: 'Você ainda não configurou o seu clube',
       });
@@ -125,10 +143,7 @@ class MatchController {
           if (cur.MatchEscalation) {
             if (cur.MatchEscalation.team === 'TIME A' && cur.type === 'GOL') {
               acc.team_a_goals += 1;
-            } else if (
-              cur.MatchEscalation.team === 'TIME B' &&
-              cur.type === 'GOL'
-            ) {
+            } else if (cur.MatchEscalation.team === 'TIME B' && cur.type === 'GOL') {
               acc.team_b_goals += 1;
             }
           } else if (cur.type === 'GOL SOFRIDO') {
@@ -167,10 +182,7 @@ class MatchController {
       where: {
         club_id: dataFindOneClub.id,
         date: {
-          [Op.between]: [
-            new Date(`${currYear}-${currMonth}-01`),
-            new Date(`${currYear}-${currMonth}-31`),
-          ],
+          [Op.between]: [new Date(`${currYear}-${currMonth}-01`), new Date(`${currYear}-${currMonth}-31`)],
         },
       },
     });
@@ -198,10 +210,7 @@ class MatchController {
         .oneOf(['RANKEADA', 'NÃO RANKEADA'], 'Pontuação é inválido'),
       type: Yup.string()
         .required('Tipo de Partida é obrigatório')
-        .oneOf(
-          ['PARTIDA INTERNA', 'PARTIDA EXTERNA'],
-          'Tipo de Partida é inválido'
-        ),
+        .oneOf(['PARTIDA INTERNA', 'PARTIDA EXTERNA'], 'Tipo de Partida é inválido'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -254,10 +263,7 @@ class MatchController {
       where: {
         club_id: dataFindOneClub.id,
         date: {
-          [Op.between]: [
-            new Date(`${currYear}-${currMonth}-01`),
-            new Date(`${currYear}-${currMonth}-31`),
-          ],
+          [Op.between]: [new Date(`${currYear}-${currMonth}-01`), new Date(`${currYear}-${currMonth}-31`)],
         },
       },
     });
@@ -276,21 +282,13 @@ class MatchController {
       });
     }
 
-    if (
-      find.timer_1 &&
-      body_request.timer_1 &&
-      body_request.timer_1 !== find.timer_1
-    ) {
+    if (find.timer_1 && body_request.timer_1 && body_request.timer_1 !== find.timer_1) {
       return res.status(400).json({
         message: 'Este cronômetro já foi iniciado.',
       });
     }
 
-    if (
-      find.timer_2 &&
-      body_request.timer_2 &&
-      body_request.timer_2 !== find.timer_2
-    ) {
+    if (find.timer_2 && body_request.timer_2 && body_request.timer_2 !== find.timer_2) {
       return res.status(400).json({
         message: 'Este cronômetro já foi iniciado.',
       });
