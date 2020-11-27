@@ -99,7 +99,7 @@ class MonthlyPaymentController {
         club_id,
         referent: {
           [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lte]: new Date(`${year}-${month}-31`),
+          [Op.le]: new Date(`${year}-${month + 1}-01`),
         },
       },
     });
@@ -135,7 +135,7 @@ class MonthlyPaymentController {
         club_id,
         referent: {
           [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lte]: new Date(`${year}-${month}-31`),
+          [Op.lt]: new Date(`${year}-${month + 1}-01`),
         },
       },
     });
@@ -160,7 +160,7 @@ class MonthlyPaymentController {
               [Op.eq]: club_id,
             },
             created_at: {
-              [Op.lte]: new Date(`${year}-${month}-31`),
+              [Op.lt]: new Date(`${year}-${month + 1}-01`),
             },
           },
         },
@@ -189,7 +189,7 @@ class MonthlyPaymentController {
       where: {
         club_id: user_request.club_id,
         created_at: {
-          [Op.lte]: new Date(`${year}-${month}-31`),
+          [Op.lt]: new Date(`${year}-${month + 1}-01`),
         },
       },
       include: [
@@ -198,7 +198,7 @@ class MonthlyPaymentController {
           where: {
             referent: {
               [Op.gte]: new Date(`${year}-${month}-01`),
-              [Op.lte]: new Date(`${year}-${month}-31`),
+              [Op.lt]: new Date(`${year}-${month + 1}-01`),
             },
           },
           required: false,
