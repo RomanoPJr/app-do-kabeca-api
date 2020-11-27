@@ -6,15 +6,15 @@ import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
 
-const getTotalizers = async ({ club_id, year, month }) => {
+const getTotalizers = async ({ club_id, startDate, endDate }) => {
   const paid = await MonthlyPayment.findAndCountAll({
     raw: true,
     nest: true,
     where: {
       club_id,
       referent: {
-        [Op.gte]: new Date(`${year}-${month}-01`),
-        [Op.lt]: new Date(`${year}-${month + 1}-01`),
+        [Op.gte]: startDate,
+        [Op.lt]: endDate,
       },
     },
   });
@@ -52,7 +52,7 @@ const getTotalizers = async ({ club_id, year, month }) => {
             [Op.eq]: club_id,
           },
           created_at: {
-            [Op.lt]: new Date(`${year}-${month + 1}-01`),
+            [Op.lt]: endDate,
           },
         },
       },
@@ -85,6 +85,9 @@ class MonthlyPaymentController {
 
     let club_id = null;
 
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
     if (headers.club_id) {
       club_id = headers.club_id;
     } else {
@@ -98,13 +101,13 @@ class MonthlyPaymentController {
       where: {
         club_id,
         referent: {
-          [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lt]: new Date(`${year}-${month + 1}-01`),
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
         },
       },
     });
 
-    const totalizers = await getTotalizers({ club_id, year, month });
+    const totalizers = await getTotalizers({ club_id, startDate, endDate });
 
     return res.json({
       pageSize,
@@ -124,6 +127,9 @@ class MonthlyPaymentController {
 
     let club_id = null;
 
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
     if (headers.club_id) {
       club_id = headers.club_id;
     } else {
@@ -134,8 +140,8 @@ class MonthlyPaymentController {
       where: {
         club_id,
         referent: {
-          [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lt]: new Date(`${year}-${month + 1}-01`),
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
         },
       },
     });
@@ -160,14 +166,14 @@ class MonthlyPaymentController {
               [Op.eq]: club_id,
             },
             created_at: {
-              [Op.lt]: new Date(`${year}-${month + 1}-01`),
+              [Op.lt]: endDate,
             },
           },
         },
       ],
     });
 
-    const totalizers = await getTotalizers({ club_id, year, month });
+    const totalizers = await getTotalizers({ club_id, startDate, endDate });
 
     return res.json({
       pageSize,
@@ -182,6 +188,9 @@ class MonthlyPaymentController {
     const { user_request } = req.body;
     const { pageSize = 10, pageNumber = 1, year = new Date().getFullYear(), month = new Date().getMonth() + 1 } = req.query;
 
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
     const { count, rows } = await ClubPlayer.findAndCountAll({
       limit: pageSize,
       offset: (pageNumber - 1) * pageSize,
@@ -189,7 +198,7 @@ class MonthlyPaymentController {
       where: {
         club_id: user_request.club_id,
         created_at: {
-          [Op.lt]: new Date(`${year}-${month + 1}-01`),
+          [Op.lt]: endDate,
         },
       },
       include: [
@@ -197,8 +206,8 @@ class MonthlyPaymentController {
           model: MonthlyPayment,
           where: {
             referent: {
-              [Op.gte]: new Date(`${year}-${month}-01`),
-              [Op.lt]: new Date(`${year}-${month + 1}-01`),
+              [Op.gte]: startDate,
+              [Op.lt]: endDate,
             },
           },
           required: false,
@@ -209,7 +218,7 @@ class MonthlyPaymentController {
       ],
     });
 
-    const totalizers = await getTotalizers({ user_request, year, month });
+    const totalizers = await getTotalizers({ user_request, startDate, endDate });
     return res.json({
       pageSize,
       pageNumber,
