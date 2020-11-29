@@ -22,15 +22,7 @@ class UserController {
 
     const findAllData = await User.findOne({
       where: { [field]: value },
-      attributes: [
-        'id',
-        'name',
-        'birth_date',
-        'email',
-        'phone',
-        'status',
-        'type',
-      ],
+      attributes: ['id', 'name', 'birth_date', 'email', 'phone', 'status', 'type'],
     });
 
     return res.json(findAllData);
@@ -53,14 +45,9 @@ class UserController {
       type: Yup.string()
         .required()
         .oneOf(['ADMIN', 'ORGANIZER', 'PLAYER']),
-      birth_date: Yup.date('Campo Data de Nascimento é inválido').when(
-        'type',
-        (type, field) => {
-          return type === 'PLAYER'
-            ? field.required('Campo Data de Nascimento é obrigatório')
-            : field;
-        }
-      ),
+      birth_date: Yup.date('Campo Data de Nascimento é inválido').when('type', (type, field) => {
+        return type === 'PLAYER' ? field.required('Campo Data de Nascimento é obrigatório') : field;
+      }),
       password: Yup.string()
         .required('Campo Senha é obrigatório')
         .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros'),
@@ -77,10 +64,7 @@ class UserController {
       return res.status(400).json({ error: validate.error });
     }
 
-    if (
-      (body.type === 'ORGANIZER' || body.type === 'ADMIN') &&
-      body.user_request.type !== 'ADMIN'
-    ) {
+    if ((body.type === 'ORGANIZER' || body.type === 'ADMIN') && body.user_request.type !== 'ADMIN') {
       return res.status(401).json({
         error: `Somente administradores podem executar esta ação`,
       });
@@ -124,27 +108,14 @@ class UserController {
       type: Yup.string()
         .required()
         .oneOf(['ADMIN', 'ORGANIZER', 'PLAYER']),
-      birth_date: Yup.date('Campo Data de Nascimento é inválido').when(
-        'type',
-        (type, field) => {
-          return type === 'PLAYER'
-            ? field.required('Campo Data de Nascimento é obrigatório')
-            : field;
-        }
-      ),
+      birth_date: Yup.date('Campo Data de Nascimento é inválido').when('type', (type, field) => {
+        return type === 'PLAYER' ? field.required('Campo Data de Nascimento é obrigatório') : field;
+      }),
       password: Yup.string().when('oldPassword', (oldPassword, field) =>
-        oldPassword
-          ? field
-              .required('Campo Senha é obrigatório')
-              .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros')
-          : field
+        oldPassword ? field.required('Campo Senha é obrigatório').min(6, 'Senha deve possuir no mínimo 6 letras ou numeros') : field
       ),
       confirmPassword: Yup.string().when('password', (password, field) =>
-        password
-          ? field
-              .required('Campo Confirmar Senha é obrigatório')
-              .oneOf([Yup.ref('password')], 'As senhas não coincidem')
-          : field
+        password ? field.required('Campo Confirmar Senha é obrigatório').oneOf([Yup.ref('password')], 'As senhas não coincidem') : field
       ),
     });
 
@@ -158,20 +129,13 @@ class UserController {
 
     const user = await User.findByPk(body.id);
 
-    if (
-      (user.type === 'ORGANIZER' || user.type === 'ADMIN') &&
-      body.user_request.type !== 'ADMIN'
-    ) {
+    if ((user.type === 'ORGANIZER' || user.type === 'ADMIN') && body.user_request.type !== 'ADMIN') {
       return res.status(401).json({
         error: `Somente administradores podem executar esta ação`,
       });
     }
 
-    if (
-      user.type === 'PLAYER' &&
-      body.user_request.type !== 'ORGANIZER' &&
-      body.user_request.type !== 'PLAYER'
-    ) {
+    if (user.type === 'PLAYER' && body.user_request.type !== 'ORGANIZER' && body.user_request.type !== 'PLAYER') {
       return res.status(401).json({
         error: `Somente pessoas autorizadas podem executar esta ação`,
       });
@@ -210,11 +174,15 @@ class UserController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await User.destroy({
-      where: {
-        id,
-      },
-    });
+
+    const user = await User.findByPk(id);
+
+    if (user) {
+      await user.update({
+        status: 'INATIVO',
+      });
+    }
+
     return res.status(200).json({});
   }
 }

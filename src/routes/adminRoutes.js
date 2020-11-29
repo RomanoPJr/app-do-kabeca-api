@@ -16,7 +16,7 @@ export default routes => {
 
   routes.get('/admin/organizer', OrganizerController.index);
   routes.put('/admin/organizer', OrganizerController.update);
-  routes.delete('/admin/organizer', OrganizerController.delete);
+  routes.delete('/admin/organizer/:id', OrganizerController.delete);
 
   routes.get('/admin/suggestion_statute', SuggestionStatuteController.index);
   routes.put('/admin/suggestion_statute', SuggestionStatuteController.update);

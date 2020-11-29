@@ -76,6 +76,10 @@ class SessionController {
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
 
+    if (user.status === 'INATIVO') {
+      return res.status(401).json({ error: 'Usuário desativado, contacte o administrador' });
+    }
+
     const userDataResponse = {
       name: user.name,
       type: user.type,

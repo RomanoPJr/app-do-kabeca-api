@@ -21,8 +21,6 @@ class ReportController {
       club_id = user_request.club_id;
     }
 
-    console.log(club_id);
-
     if (!dateStart || !dateEnd) {
       return res.status(400).json({
         error: 'Informe data de início e fim',

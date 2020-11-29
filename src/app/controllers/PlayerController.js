@@ -27,12 +27,7 @@ class PlayerController {
   }
 
   async index(req, res) {
-    const {
-      pageSize = 10,
-      pageNumber = 1,
-      field = false,
-      value = false,
-    } = req.query;
+    const { pageSize = 10, pageNumber = 1, field = false, value = false } = req.query;
     const { user_request } = req.body;
 
     const dataCount = await ClubPlayer.count({
@@ -53,16 +48,8 @@ class PlayerController {
       attributes: ['id', 'name', 'phone', 'status', 'birth_date', 'type'],
       include: [
         {
-          where: { club_id: user_request.club_id },
+          where: { club_id: user_request.club_id, status: 'ATIVO' },
           model: ClubPlayer,
-          attributes: [
-            'id',
-            'position',
-            'user_id',
-            'invite',
-            'created_at',
-            'monthly_payment',
-          ],
         },
       ],
     });
@@ -114,12 +101,7 @@ class PlayerController {
         {
           required: false,
           limit: 1,
-          attributes: [
-            'club_player_id',
-            'match_id',
-            'match_date',
-            'created_at',
-          ],
+          attributes: ['club_player_id', 'match_id', 'match_date', 'created_at'],
           order: [['created_at', 'asc']],
           model: MatchInviteConfirmation,
           where: {
@@ -149,11 +131,9 @@ class PlayerController {
     });
 
     confirmated.sort(function(a, b) {
-      return a.MatchInviteConfirmations.created_at <
-        b.MatchInviteConfirmations.created_at
+      return a.MatchInviteConfirmations.created_at < b.MatchInviteConfirmations.created_at
         ? -1
-        : a.MatchInviteConfirmations.created_at >
-          b.MatchInviteConfirmations.created_at
+        : a.MatchInviteConfirmations.created_at > b.MatchInviteConfirmations.created_at
         ? 1
         : 0;
     });
@@ -192,14 +172,9 @@ class PlayerController {
         .max(11, 'Telefone precisa ter entre 10 e 11 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
-        .oneOf(
-          ['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'],
-          'Posição é inválida'
-        ),
+        .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'], 'Posição é inválida'),
       monthly_payment: Yup.number().when('position', (position, field) => {
-        return position !== 'COLABORADOR'
-          ? field.required('Valor da Mensalidade é obrigatório')
-          : field;
+        return position !== 'COLABORADOR' ? field.required('Valor da Mensalidade é obrigatório') : field;
       }),
       created_at: Yup.date().required('Data de Entrada é obrigatória'),
     });
@@ -274,16 +249,11 @@ class PlayerController {
         .min(3, 'Nome precisa possuir o tamanho mínimo de 3 caracteres'),
       position: Yup.string()
         .required('Posição é obrigatória')
-        .oneOf(
-          ['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'],
-          'Posição é inválida'
-        ),
+        .oneOf(['GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'], 'Posição é inválida'),
       invite: Yup.string()
         .required('Status é obrigatório')
         .oneOf(['AGUARDANDO', 'ACEITO', 'BLOQUEADO'], 'Status é inválido'),
-      monthly_payment: Yup.number().required(
-        'Valor da Mensalidade é obrigatório'
-      ),
+      monthly_payment: Yup.number().required('Valor da Mensalidade é obrigatório'),
       created_at: Yup.date().required('Data de Entrada é obrigatória'),
     });
 
@@ -315,8 +285,7 @@ class PlayerController {
 
     const { invite, position, monthly_payment, created_at } = body_request;
 
-    const new_monthly_payment =
-      position === 'COLABORADOR' ? 0 : monthly_payment;
+    const new_monthly_payment = position === 'COLABORADOR' ? 0 : monthly_payment;
 
     await findClubPlayer.update({
       invite,
@@ -352,8 +321,7 @@ class PlayerController {
 
     if (findUser.type === 'ORGANIZER') {
       return res.status(400).json({
-        error:
-          'Este usuário é um organizador, somente o administrador pode alterar a senha.',
+        error: 'Este usuário é um organizador, somente o administrador pode alterar a senha.',
       });
     }
 
@@ -364,11 +332,15 @@ class PlayerController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await ClubPlayer.destroy({
-      where: {
-        id,
-      },
-    });
+
+    const user = await ClubPlayer.findByPk(id);
+
+    if (user) {
+      await user.update({
+        status: 'INATIVO',
+      });
+    }
+
     return res.json({});
   }
 }

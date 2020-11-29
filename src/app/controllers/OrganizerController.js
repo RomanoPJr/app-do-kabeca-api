@@ -45,13 +45,8 @@ class OrganizerController {
       email: Yup.string()
         .required('Email é obrigatório')
         .email('Email é inválido'),
-      birth_date: Yup.date('Data de Nascimento é inválido').required(
-        'Data de Nascimento é obrigatória'
-      ),
-      status: Yup.string().oneOf(
-        ['ATIVO', 'INATIVO', 'TESTE'],
-        'Status é inválido'
-      ),
+      birth_date: Yup.date('Data de Nascimento é inválido').required('Data de Nascimento é obrigatória'),
+      status: Yup.string().oneOf(['ATIVO', 'INATIVO', 'TESTE'], 'Status é inválido'),
       password: Yup.string()
         .required('Senha é obrigatório')
         .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros'),
@@ -80,15 +75,7 @@ class OrganizerController {
 
     body.type = 'ORGANIZER';
 
-    const {
-      id,
-      name,
-      email,
-      phone,
-      type,
-      status,
-      created_at,
-    } = await User.create(body);
+    const { id, name, email, phone, type, status, created_at } = await User.create(body);
 
     return res.json({
       id,
@@ -162,11 +149,15 @@ class OrganizerController {
 
   async delete(req, res) {
     const { id } = req.params;
-    await User.destroy({
-      where: {
-        id,
-      },
-    });
+
+    const user = await User.findByPk(id);
+
+    if (user) {
+      await user.update({
+        status: 'INATIVO',
+      });
+    }
+
     return res.status(200).json({});
   }
 }
