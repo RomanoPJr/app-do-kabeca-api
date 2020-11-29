@@ -283,6 +283,9 @@ class MonthlyPaymentController {
     const { user_request } = req.body;
     const { year, month } = req.query;
 
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
     if (!year || !month) {
       return res.status(400).json({ message: 'Informe o mês e o Ano' });
     }
@@ -293,8 +296,8 @@ class MonthlyPaymentController {
       where: {
         club_id: user_request.club_id,
         referent: {
-          [Op.gte]: new Date(`${year}-${month}-01`),
-          [Op.lte]: new Date(`${year}-${month}-31`),
+          [Op.gte]: startDate,
+          [Op.lt]: endDate,
         },
       },
     });
@@ -317,7 +320,7 @@ class MonthlyPaymentController {
               [Op.eq]: user_request.club_id,
             },
             created_at: {
-              [Op.lte]: new Date(`${year}-${month}-31`),
+              [Op.lt]: endDate,
             },
             monthly_payment: 0,
           },

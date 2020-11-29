@@ -76,7 +76,10 @@ class MatchController {
   }
 
   async findOne(req, res) {
-    const { headers, user_request } = req;
+    const {
+      headers,
+      body: { user_request },
+    } = req;
 
     let club_id = null;
 
