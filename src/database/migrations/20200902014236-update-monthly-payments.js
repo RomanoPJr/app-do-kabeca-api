@@ -9,7 +9,7 @@ module.exports = {
       onUpdate: 'cascade',
       onDelete: 'cascade',
       allowNull: false,
-      defaultValue: 1,
+      defaultValue: 2,
     });
   },
 
