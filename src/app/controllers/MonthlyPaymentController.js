@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import User from '../models/User';
 import ClubPlayer from '../models/ClubPlayer';
 import MonthlyPayment from '../models/MonthlyPayment';
+import Club from '../models/Club';
 
 const getTotalizers = async ({ club_id, startDate, endDate }) => {
   const data = await MonthlyPayment.findAll({
@@ -53,12 +54,22 @@ class MonthlyPaymentController {
     } = req;
 
     let club_id = null;
+    const filterByUser = {};
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
     if (headers.club_id) {
       club_id = headers.club_id;
+
+      const club = await Club.findOne({
+        raw: true,
+        nest: true,
+        where: { id: club_id },
+      });
+      if (club && club.payment_module_view_type !== 'ALL') {
+        filterByUser.id = user_request.id;
+      }
     } else {
       club_id = user_request.club_id;
     }
@@ -86,6 +97,7 @@ class MonthlyPaymentController {
           include: [
             {
               model: User,
+              where: filterByUser,
             },
           ],
         },
@@ -112,12 +124,23 @@ class MonthlyPaymentController {
     } = req;
 
     let club_id = null;
+    const filterByUser = {};
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
     if (headers.club_id) {
       club_id = headers.club_id;
+
+      const club = await Club.findOne({
+        raw: true,
+        nest: true,
+        where: { id: club_id },
+      });
+
+      if (club && club.payment_module_view_type !== 'ALL') {
+        filterByUser.id = user_request.id;
+      }
     } else {
       club_id = user_request.club_id;
     }
@@ -147,6 +170,7 @@ class MonthlyPaymentController {
           include: [
             {
               model: User,
+              where: filterByUser,
             },
           ],
         },
@@ -189,6 +213,7 @@ class MonthlyPaymentController {
         club_id: i.club_id,
         name: i.User.name,
         createdAt: new Date(year, month - 1, 1),
+        phone: i.User.phone,
       };
     });
 
@@ -208,27 +233,11 @@ class MonthlyPaymentController {
       return res.status(400).json({ message: 'Informe o mês e o Ano' });
     }
 
-    const paid = await MonthlyPayment.findAndCountAll({
+    const debit = await MonthlyPayment.findAll({
       raw: true,
       nest: true,
       where: {
-        club_id: user_request.club_id,
-        referent: {
-          [Op.gte]: startDate,
-          [Op.lt]: endDate,
-        },
-      },
-    });
-
-    const phones = paid.rows.map(payment => payment.phone);
-
-    const debit = await User.findAll({
-      raw: true,
-      nest: true,
-      where: {
-        phone: {
-          [Op.notIn]: phones,
-        },
+        referent: null,
       },
       include: [
         {
@@ -246,17 +255,20 @@ class MonthlyPaymentController {
       ],
     });
 
-    const payments = debit.map(item => ({
-      due_value: 0,
-      paid_value: 0,
-      referent: `${year}-${month}-01`,
-      club_id: user_request.club_id,
-      name: item.name,
-      phone: item.phone,
-      position: item.ClubPlayers.position,
-    }));
+    const payments = debit.map(item => item.id);
 
-    const responseB = await MonthlyPayment.bulkCreate(payments);
+    const responseB = await MonthlyPayment.update(
+      {
+        referent: `${year}-${month}-01`,
+      },
+      {
+        where: {
+          id: {
+            [Op.in]: payments,
+          },
+        },
+      }
+    );
 
     return res.json(responseB);
   }
