@@ -10,13 +10,8 @@ class MonthlyPayment extends Model {
         due_value: Sequelize.DECIMAL,
         paid_value: Sequelize.DECIMAL,
         referent: Sequelize.DATEONLY,
-        position: Sequelize.ENUM(
-          'GOLEIRO',
-          'DEFESA',
-          'MEIO',
-          'ATAQUE',
-          'COLABORADOR'
-        ),
+        position: Sequelize.ENUM('GOLEIRO', 'DEFESA', 'MEIO', 'ATAQUE', 'COLABORADOR'),
+        player_id: Sequelize.INTEGER,
       },
       {
         sequelize,
@@ -24,6 +19,10 @@ class MonthlyPayment extends Model {
     );
 
     return this;
+  }
+
+  static associate(models) {
+    this.belongsTo(models.ClubPlayer, { foreignKey: 'player_id' });
   }
 }
 

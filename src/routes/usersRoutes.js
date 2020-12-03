@@ -43,14 +43,6 @@ export default routes => {
   routes.get('/user', UserController.index);
   routes.get('/user/find', UserController.findOne);
 
-  routes.get('/payment', MonthlyPaymentController.index);
-  routes.get('/payment/paid', MonthlyPaymentController.listPaid);
-  routes.get('/payment/debit', MonthlyPaymentController.listDebit);
-  routes.post('/payment', MonthlyPaymentController.store);
-  routes.put('/payment', MonthlyPaymentController.update);
-  routes.delete('/payment/:id', MonthlyPaymentController.delete);
-  routes.post('/payment_non_paying', MonthlyPaymentController.storeNonPaying);
-
   routes.get('/match', MatchController.index);
   routes.get('/match/byDate', MatchController.listByDate);
   routes.get('/match/:id', MatchController.findOne);
@@ -72,6 +64,12 @@ export default routes => {
   routes.get('/report/aniversario', ReportController.aniversario);
   routes.get('/report/pontuacaoGeral', ReportController.pontuacaoGeral);
   routes.get('/report/pontuacaoGeralPosicao', ReportController.pontuacaoGeralPorPontuacao);
+
+  routes.put('/payment', MonthlyPaymentController.update);
+  routes.get('/payment/paid', MonthlyPaymentController.listPaid);
+  routes.get('/payment/debit', MonthlyPaymentController.listDebit);
+  routes.post('/payment/all', MonthlyPaymentController.storeAll);
+  routes.post('/payment_non_paying', MonthlyPaymentController.storeNonPaying);
 
   routes.get('/suggestion_statute', SuggestionStatuteController.index);
 };
