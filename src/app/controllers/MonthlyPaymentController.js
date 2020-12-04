@@ -178,13 +178,45 @@ class MonthlyPaymentController {
     });
 
     const totalizers = await getTotalizers({ club_id, startDate, endDate });
+    let hasPaid;
+    if (data.count === 0) {
+      hasPaid = await MonthlyPayment.count({
+        raw: true,
+        nest: true,
+        where: {
+          referent: {
+            [Op.gte]: startDate,
+            [Op.lt]: endDate,
+          },
+        },
+        include: [
+          {
+            model: ClubPlayer,
+            where: {
+              club_id: {
+                [Op.eq]: club_id,
+              },
+              created_at: {
+                [Op.lt]: endDate,
+              },
+            },
+            include: [
+              {
+                model: User,
+                where: filterByUser,
+              },
+            ],
+          },
+        ],
+      });
+    }
 
     return res.json({
       pageSize,
       pageNumber,
       pageTotal: Math.ceil(data.count / pageSize),
       totalizers,
-      data: data.rows,
+      data: data.count === 0 && hasPaid > 0 ? false : data.rows,
     });
   }
 
@@ -226,7 +258,6 @@ class MonthlyPaymentController {
     const { user_request } = req.body;
     const { year, month } = req.query;
 
-    const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
     if (!year || !month) {
