@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import Sequelize, { Op } from 'sequelize';
+import bcrypt from 'bcryptjs';
 import User from '../models/User';
 
 class UserController {
@@ -92,6 +93,57 @@ class UserController {
       status: 'success',
       data: { id, name, email, phone, type, status },
     });
+  }
+
+  async storeSenha(req, res) {
+    const { body } = req;
+
+    const schema = Yup.object().shape({
+      phone: Yup.string()
+        .required('Campo Telefone é obrigatório')
+        .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
+      password: Yup.string()
+        .required('Campo Senha é obrigatório')
+        .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros'),
+      confirmPassword: Yup.string()
+        .required('Campo Confirmar Senha é obrigatório')
+        .oneOf([Yup.ref('password')], 'As senhas não coincidem'),
+    });
+
+    const validate = await schema.validate(body).catch(err => {
+      return err.message ? { error: err.message } : {};
+    });
+
+    if (validate.error) {
+      return res.status(400).json({ error: validate.error });
+    }
+
+    const userExists = await User.findOne({
+      where: { phone: body.phone },
+    });
+
+    if (!userExists) {
+      return res.status(400).json({ error: 'Não foi possível criar uma senha' });
+    }
+
+    if (userExists && userExists.getDataValue('password_hash')) {
+      return res.status(400).json({ error: 'Não foi possível criar uma senha' });
+    }
+
+    if (userExists && userExists.getDataValue('type') !== 'PLAYER') {
+      return res.status(400).json({ error: 'Não foi possível criar uma senha' });
+    }
+
+    try {
+      const senha = await bcrypt.hash(body.password, 8);
+
+      await userExists.update({
+        password_hash: senha,
+      });
+      return res.json({ data: null, success: true, error: null });
+    } catch (e) {
+      return res.json({ data: null, success: false, error: 'Erro desconhecido' });
+    }
   }
 
   async update(req, res) {

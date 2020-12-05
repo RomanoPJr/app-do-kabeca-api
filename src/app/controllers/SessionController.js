@@ -1,6 +1,7 @@
 import * as Yup from 'yup';
 import jwt from 'jsonwebtoken';
 
+import Sequelize from 'sequelize';
 import User from '../models/User';
 import decode from '../../utils/token';
 import authConfig from '../../config/auth';
@@ -50,9 +51,7 @@ class SessionController {
 
     const schema = Yup.object().shape({
       password: Yup.string().required('O campo Senha é obrigatório'),
-      email: Yup.string()
-        .email('O campo Email é inválido')
-        .required('O campo Email é obrigatório'),
+      email: Yup.string().required('O campo Email é obrigatório'),
     });
 
     const validate = await schema.validate(body).catch(err => {
@@ -64,7 +63,7 @@ class SessionController {
     }
 
     const user = await User.findOne({
-      where: { email: body.email },
+      where: Sequelize.or({ email: body.email }, { phone: body.email }),
       attributes: ['id', 'name', 'status', 'password_hash', 'type', 'createdAt'],
     });
 
