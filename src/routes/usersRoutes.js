@@ -10,6 +10,7 @@ import MatchEventController from '../app/controllers/MatchEventController';
 import EscalationController from '../app/controllers/MatchEscalationController';
 import MonthlyPaymentController from '../app/controllers/MonthlyPaymentController';
 import SuggestionStatuteController from '../app/controllers/SuggestionStatuteController';
+import SeasonController from '../app/controllers/SeasonController';
 
 export default routes => {
   routes.get('/club', ClubController.index);
@@ -72,4 +73,8 @@ export default routes => {
   routes.post('/payment_non_paying', MonthlyPaymentController.storeNonPaying);
 
   routes.get('/suggestion_statute', SuggestionStatuteController.index);
+
+  routes.get('/season', SeasonController.index);
+  routes.post('/season', SeasonController.store);
+  routes.delete('/season/:id', SeasonController.delete);
 };
