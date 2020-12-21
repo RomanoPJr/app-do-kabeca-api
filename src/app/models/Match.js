@@ -26,6 +26,10 @@ class Match extends Model {
   static associate(models) {
     this.hasMany(models.MatchEscalation, { foreignKey: 'match_id' });
     this.hasMany(models.MatchEvent, { foreignKey: 'match_id' });
+    this.hasOne(models.MatchInvite, {
+      sourceKey: 'date',
+      foreignKey: 'match_date',
+    });
   }
 }
 

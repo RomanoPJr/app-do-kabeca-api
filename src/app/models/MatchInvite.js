@@ -16,9 +16,11 @@ class MatchInvite extends Model {
     return this;
   }
 
-  // static associate(models) {
-  //   this.hasOne(models.Match, { foreignKey: 'id', sourceKey: 'match_id' });
-  // }
+  static associate(models) {
+    this.hasMany(models.MatchInviteConfirmation, {
+      foreignKey: 'match_invite_id',
+    });
+  }
 }
 
 export default MatchInvite;

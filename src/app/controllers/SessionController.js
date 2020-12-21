@@ -31,8 +31,10 @@ class SessionController {
 
     if (user.type === 'PLAYER') {
       const clubs = await ClubPlayer.findAll({
+        raw: true,
+        nest: true,
         where: { user_id: user.id },
-        attributes: ['club_id', 'user_id', 'position', 'createdAt'],
+        attributes: ['id', 'club_id', 'user_id', 'position', 'createdAt'],
         include: [
           {
             model: Club,
@@ -40,7 +42,10 @@ class SessionController {
         ],
       });
 
+      const { club_id } = req.headers;
+      const currentClubPlayer = clubs.find(i => i.club_id === parseInt(club_id, 10));
       userDataResponse.clubs = clubs;
+      userDataResponse.currentClubPlayer = currentClubPlayer;
     }
 
     return res.json(userDataResponse);

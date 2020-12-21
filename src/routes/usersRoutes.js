@@ -4,6 +4,7 @@ import EventController from '../app/controllers/EventController';
 import MatchController from '../app/controllers/MatchController';
 import PlayerController from '../app/controllers/PlayerController';
 import ReportController from '../app/controllers/ReportController';
+import SeasonController from '../app/controllers/SeasonController';
 import SponsorController from '../app/controllers/SponsorController';
 import StatuteController from '../app/controllers/StatuteController';
 import MatchEventController from '../app/controllers/MatchEventController';
@@ -11,7 +12,7 @@ import MatchInviteController from '../app/controllers/MatchInviteController';
 import EscalationController from '../app/controllers/MatchEscalationController';
 import MonthlyPaymentController from '../app/controllers/MonthlyPaymentController';
 import SuggestionStatuteController from '../app/controllers/SuggestionStatuteController';
-import SeasonController from '../app/controllers/SeasonController';
+import MatchInviteConfirmationController from '../app/controllers/MatchInviteConfirmationController';
 
 export default routes => {
   routes.get('/club', ClubController.index);
@@ -82,4 +83,8 @@ export default routes => {
   routes.get('/match-invite', MatchInviteController.index);
   routes.post('/match-invite', MatchInviteController.store);
   routes.delete('/match-invite/:id', MatchInviteController.delete);
+
+  routes.get('/match-invite-confirmation', MatchInviteConfirmationController.index);
+  routes.post('/match-invite-confirmation', MatchInviteConfirmationController.store);
+  routes.delete('/match-invite-confirmation/:id', MatchInviteConfirmationController.delete);
 };

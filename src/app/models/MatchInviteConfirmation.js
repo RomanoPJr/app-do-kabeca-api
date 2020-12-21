@@ -4,7 +4,7 @@ class MatchInviteConfirmation extends Model {
   static init(sequelize) {
     super.init(
       {
-        match_id: Sequelize.INTEGER,
+        match_invite_id: Sequelize.INTEGER,
         club_player_id: Sequelize.INTEGER,
         match_date: Sequelize.DATEONLY,
       },
@@ -17,10 +17,10 @@ class MatchInviteConfirmation extends Model {
     return this;
   }
 
-  // static associate(models) {
-  //   this.hasOne(models.Match, { foreignKey: 'id', sourceKey: 'match_id' });
-  //   this.hasOne(models.User, { foreignKey: 'id', sourceKey: 'user_id' });
-  // }
+  static associate(models) {
+    this.hasOne(models.MatchInvite, { foreignKey: 'id', sourceKey: 'match_invite_id' });
+    this.hasOne(models.ClubPlayer, { foreignKey: 'id', sourceKey: 'club_player_id' });
+  }
 }
 
 export default MatchInviteConfirmation;

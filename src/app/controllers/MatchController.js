@@ -1,10 +1,13 @@
 import * as Yup from 'yup';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import Club from '../models/Club';
 import User from '../models/User';
 import Match from '../models/Match';
-import MatchEscalation from '../models/MatchEscalation';
 import MatchEvent from '../models/MatchEvent';
+import MatchInvite from '../models/MatchInvite';
+import MatchEscalation from '../models/MatchEscalation';
+import MatchInviteConfirmation from '../models/MatchInviteConfirmation';
+import databaseConfig from '../../config/database';
 
 class MatchController {
   async index(req, res) {
@@ -27,15 +30,62 @@ class MatchController {
       group: ['date'],
     });
 
-    const { rows } = await Match.findAndCountAll({
-      where: findOneWhere,
-      offset: (pageNumber - 1) * pageSize,
-      limit: pageSize,
-      order: [['date', 'desc']],
-      attributes: ['date'],
-      group: ['date'],
-    });
+    const include = [];
+    const group = ['date'];
+    let rows;
+    if (user_request.ClubPlayers) {
+      // include.push({
+      //   model: MatchInvite,
+      //   required: true,
+      //   include: [
+      //     {
+      //       model: MatchInviteConfirmation,
+      //       required: false,
+      //     },
+      //   ],
+      // });
+      // group.push('MatchInvite.id');
+      // group.push('Match.id');
 
+      const conexao = new Sequelize(databaseConfig);
+      const [results] = await conexao.query(`
+        select
+          distinct(date),
+          matches_invites.id as match_invite_id,
+          matches_invites_confirmations.id as match_invite_confirmation_id
+        from matches
+        join matches_invites on matches.date = matches_invites.match_date
+        left join matches_invites_confirmations on matches_invites.id = matches_invites_confirmations.match_invite_id
+        where matches.club_id = ${headers.club_id}
+        order by date desc
+        offset ${(pageNumber - 1) * pageSize}
+        limit ${pageSize}
+
+      `);
+      rows = results;
+      // .findAll({
+      //   order: [['date', 'desc']],
+      //   attributes: ['date'],
+      //   group,
+      // });
+    } else {
+      include.push({
+        model: MatchInvite,
+        required: false,
+      });
+      group.push('MatchInvite.id');
+
+      rows = await Match.findAll({
+        distinct: true,
+        where: findOneWhere,
+        include,
+        offset: (pageNumber - 1) * pageSize,
+        limit: pageSize,
+        order: [['date', 'desc']],
+        attributes: ['date'],
+        group,
+      });
+    }
     return res.json({
       pageSize,
       pageNumber,

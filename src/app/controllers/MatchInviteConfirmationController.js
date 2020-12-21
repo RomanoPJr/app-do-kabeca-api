@@ -1,9 +1,8 @@
 import * as Yup from 'yup';
 import Club from '../models/Club';
-import MatchInvite from '../models/MatchInvite';
 import MatchInviteConfirmation from '../models/MatchInviteConfirmation';
 
-class MatchInviteController {
+class MatchInviteConfirmationController {
   async index(req, res) {
     const { pageSize = 10, pageNumber = 1 } = req.query;
     const { user_request } = req.body;
@@ -19,21 +18,18 @@ class MatchInviteController {
       });
     }
 
-    const pageTotal = await MatchInvite.count({
-      where: { club_id: club.id },
+    if (!user_request.ClubPlayers.id) {
+      return res.status(404).json({
+        error: 'Somente jogadores podem executar esta ação',
+      });
+    }
+
+    const pageTotal = await MatchInviteConfirmation.count({
+      where: { club_player_id: user_request.ClubPlayers.id },
     });
 
-    const dataFindAll = await MatchInvite.findAll({
-      where: { club_id: club.id },
-      include: [
-        {
-          required: false,
-          model: MatchInviteConfirmation,
-          where: {
-            club_player_id: user_request.ClubPlayers.id,
-          },
-        },
-      ],
+    const dataFindAll = await MatchInviteConfirmation.findAll({
+      where: { club_player_id: user_request.ClubPlayers.id },
       offset: (pageNumber - 1) * pageSize,
       limit: pageSize,
       order: [['match_date', 'desc']],
@@ -63,6 +59,7 @@ class MatchInviteController {
 
     const schema = Yup.object().shape({
       match_date: Yup.date().required('Data da pelada não informada'),
+      match_invite_id: Yup.string().required('Convite não informado'),
     });
 
     const validate = await schema.validate(body_request).catch(err => {
@@ -73,26 +70,29 @@ class MatchInviteController {
       return res.status(400).json({ error: validate.error });
     }
 
-    const existsInvite = await MatchInvite.findOne({
-      where: { club_id: club.id, match_date: body_request.match_date },
+    const existsInviteConfirmation = await MatchInviteConfirmation.findOne({
+      where: {
+        club_player_id: user_request.ClubPlayers.id,
+        match_invite_id: body_request.match_invite_id,
+      },
       attributes: ['id'],
     });
 
-    if (existsInvite) {
+    if (existsInviteConfirmation) {
       return res.status(400).json({
-        message: 'Já foi enviado um convite para este dia',
+        error: 'Sua presença já foi confirmada',
       });
     }
 
-    body_request.club_id = club.id;
+    body_request.club_player_id = user_request.ClubPlayers.id;
 
-    const createResponse = await MatchInvite.create(body_request);
+    const createResponse = await MatchInviteConfirmation.create(body_request);
     return res.json(createResponse);
   }
 
   async delete(req, res) {
     const { id } = req.params;
-    await MatchInvite.destroy({
+    await MatchInviteConfirmation.destroy({
       where: {
         id,
       },
@@ -101,4 +101,4 @@ class MatchInviteController {
   }
 }
 
-export default new MatchInviteController();
+export default new MatchInviteConfirmationController();
