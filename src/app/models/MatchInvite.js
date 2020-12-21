@@ -4,7 +4,7 @@ class MatchInvite extends Model {
   static init(sequelize) {
     super.init(
       {
-        match_id: Sequelize.INTEGER,
+        club_id: Sequelize.INTEGER,
         match_date: Sequelize.DATEONLY,
       },
       {

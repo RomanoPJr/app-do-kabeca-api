@@ -7,6 +7,7 @@ import ReportController from '../app/controllers/ReportController';
 import SponsorController from '../app/controllers/SponsorController';
 import StatuteController from '../app/controllers/StatuteController';
 import MatchEventController from '../app/controllers/MatchEventController';
+import MatchInviteController from '../app/controllers/MatchInviteController';
 import EscalationController from '../app/controllers/MatchEscalationController';
 import MonthlyPaymentController from '../app/controllers/MonthlyPaymentController';
 import SuggestionStatuteController from '../app/controllers/SuggestionStatuteController';
@@ -77,4 +78,8 @@ export default routes => {
   routes.get('/season', SeasonController.index);
   routes.post('/season', SeasonController.store);
   routes.delete('/season/:id', SeasonController.delete);
+
+  routes.get('/match-invite', MatchInviteController.index);
+  routes.post('/match-invite', MatchInviteController.store);
+  routes.delete('/match-invite/:id', MatchInviteController.delete);
 };
