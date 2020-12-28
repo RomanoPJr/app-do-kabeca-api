@@ -102,6 +102,7 @@ class UserController {
       phone: Yup.string()
         .required('Campo Telefone é obrigatório')
         .min(11, 'Telefone precisa possuir o tamanho mínimo de 11 caracteres'),
+      birthDate: Yup.string().required('Campo Data de nascimento é obrigatório'),
       password: Yup.string()
         .required('Campo Senha é obrigatório')
         .min(6, 'Senha deve possuir no mínimo 6 letras ou numeros'),
@@ -139,7 +140,9 @@ class UserController {
 
       await userExists.update({
         password_hash: senha,
+        birth_date: body.birthDate,
       });
+
       return res.json({ data: null, success: true, error: null });
     } catch (e) {
       return res.json({ data: null, success: false, error: 'Erro desconhecido' });
